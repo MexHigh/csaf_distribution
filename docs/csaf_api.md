@@ -1,0 +1,22 @@
+## csaf_api
+
+### config options
+
+The following options can be used in the config file in TOML format:
+
+```
+bind_address // The address with port, the API should listen to (default: "0.0.0.0:8080")
+```
+
+#### Example config file
+```toml
+bind_address = "0.0.0.0:1234"
+```
+
+### nginx adjustments
+
+The API endpoint itself does not handle TLS-Connections so it must be embedded under the `/api` path with an reverse proxy.
+
+Please read [provider-setup.md](provider-setup.md) first to setup nginx.
+
+**Documentation pending**

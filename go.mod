@@ -9,6 +9,7 @@ require (
 	github.com/ProtonMail/gopenpgp/v2 v2.4.7
 	github.com/PuerkitoBio/goquery v1.8.0
 	github.com/gofrs/flock v0.8.1
+	github.com/gorilla/mux v1.8.0
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
