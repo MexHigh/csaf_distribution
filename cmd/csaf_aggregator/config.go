@@ -15,7 +15,6 @@ import (
 	"net/http"
 	"os"
 	"runtime"
-	"strings"
 	"sync"
 
 	"github.com/BurntSushi/toml"
@@ -31,7 +30,6 @@ const (
 	defaultFolder     = "/var/www"
 	defaultWeb        = "/var/www/html"
 	defaultDomain     = "https://example.com"
-	defaultOpenPGPURL = "https://openpgp.circl.lu/pks/lookup?op=get&search=${FINGERPRINT}" // Default OpenPGP URL.
 )
 
 type provider struct {
@@ -43,6 +41,7 @@ type provider struct {
 }
 
 type config struct {
+	Verbose bool `toml:"verbose"`
 	// Workers is the number of concurrently executed workers for downloading.
 	Workers int    `toml:"workers"`
 	Folder  string `toml:"folder"`
@@ -53,8 +52,8 @@ type config struct {
 	Insecure            *bool               `toml:"insecure"`
 	Aggregator          csaf.AggregatorInfo `toml:"aggregator"`
 	Providers           []*provider         `toml:"providers"`
-	Key                 string              `toml:"key"`
-	OpenPGPURL          string              `toml:"openpgp_url"`
+	OpenPGPPrivateKey   string              `toml:"openpgp_private_key"`
+	OpenPGPPublicKey    string              `toml:"openpgp_public_key"`
 	Passphrase          *string             `toml:"passphrase"`
 	AllowSingleProvider bool                `toml:"allow_single_provider"`
 
@@ -79,17 +78,8 @@ func (c *config) runAsMirror() bool {
 		*c.Aggregator.Category == csaf.AggregatorAggregator
 }
 
-func (c *config) GetOpenPGPURL(key *crypto.Key) string {
-	if key == nil {
-		return c.OpenPGPURL
-	}
-	return strings.NewReplacer(
-		"${FINGERPRINT}", "0x"+key.GetFingerprint(),
-		"${KEY_ID}", "0x"+key.GetHexKeyID()).Replace(c.OpenPGPURL)
-}
-
-func (c *config) cryptoKey() (*crypto.Key, error) {
-	if c.Key == "" {
+func (c *config) privateOpenPGPKey() (*crypto.Key, error) {
+	if c.OpenPGPPrivateKey == "" {
 		return nil, nil
 	}
 	c.keyMu.Lock()
@@ -98,7 +88,7 @@ func (c *config) cryptoKey() (*crypto.Key, error) {
 		return c.key, c.keyErr
 	}
 	var f *os.File
-	if f, c.keyErr = os.Open(c.Key); c.keyErr != nil {
+	if f, c.keyErr = os.Open(c.OpenPGPPrivateKey); c.keyErr != nil {
 		return nil, c.keyErr
 	}
 	defer f.Close()
@@ -108,16 +98,25 @@ func (c *config) cryptoKey() (*crypto.Key, error) {
 
 func (c *config) httpClient(p *provider) util.Client {
 
-	client := http.Client{}
+	hClient := http.Client{}
 	if p.Insecure != nil && *p.Insecure || c.Insecure != nil && *c.Insecure {
-		client.Transport = &http.Transport{
+		hClient.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
 			},
 		}
 	}
+
+	var client util.Client
+
+	if c.Verbose {
+		client = &util.LoggingClient{Client: &hClient}
+	} else {
+		client = &hClient
+	}
+
 	if p.Rate == nil && c.Rate == nil {
-		return &client
+		return client
 	}
 
 	var r float64
@@ -128,7 +127,7 @@ func (c *config) httpClient(p *provider) util.Client {
 		r = *p.Rate
 	}
 	return &util.LimitingClient{
-		Client:  &client,
+		Client:  client,
 		Limiter: rate.NewLimiter(rate.Limit(r), 1),
 	}
 }
@@ -167,10 +166,6 @@ func (c *config) setDefaults() {
 
 	if c.Domain == "" {
 		c.Domain = defaultDomain
-	}
-
-	if c.OpenPGPURL == "" {
-		c.OpenPGPURL = defaultOpenPGPURL
 	}
 
 	if c.Workers <= 0 {
