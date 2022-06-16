@@ -145,6 +145,14 @@ func (p *processor) full() error {
 		LastUpdated:   &lastUpdated,
 	}
 
+	// add the API field to aggregregator.json if specified in config
+	if p.cfg.API != nil {
+		agg.API = &csaf.API{
+			URL:               p.cfg.API.EndpointURL,
+			SupportedVersions: p.cfg.API.SupportedVersions,
+		}
+	} // else: do not add API field
+
 	web := filepath.Join(p.cfg.Web, ".well-known", "csaf-aggregator")
 
 	dstName := filepath.Join(web, "aggregator.json")

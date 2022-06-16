@@ -40,6 +40,11 @@ type provider struct {
 	Insecure *bool    `toml:"insecure"`
 }
 
+type apiConfig struct {
+	EndpointURL       *string  `toml:"endpoint_url"`
+	SupportedVersions []string `toml:"supported_versions"`
+}
+
 type config struct {
 	Verbose bool `toml:"verbose"`
 	// Workers is the number of concurrently executed workers for downloading.
@@ -52,6 +57,7 @@ type config struct {
 	Insecure            *bool               `toml:"insecure"`
 	Aggregator          csaf.AggregatorInfo `toml:"aggregator"`
 	Providers           []*provider         `toml:"providers"`
+	API                 *apiConfig          `toml:"api"`
 	OpenPGPPrivateKey   string              `toml:"openpgp_private_key"`
 	OpenPGPPublicKey    string              `toml:"openpgp_public_key"`
 	Passphrase          *string             `toml:"passphrase"`

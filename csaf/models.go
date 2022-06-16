@@ -231,7 +231,8 @@ type Aggregator struct {
 	Version       *AggregatorVersion        `json:"aggregator_version,omitempty"` // required
 	CanonicalURL  *AggregatorURL            `json:"canonical_url,omitempty"`      // required
 	CSAFProviders []*AggregatorCSAFProvider `json:"csaf_providers,omitempty"`     // required
-	LastUpdated   *TimeStamp                `json:"last_updated,omitempty"`       // required
+	API           *API                      `json:"api,omitempty"`
+	LastUpdated   *TimeStamp                `json:"last_updated,omitempty"` // required
 }
 
 // Validate validates the current state of the AggregatorCategory.
