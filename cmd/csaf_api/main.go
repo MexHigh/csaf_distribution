@@ -10,23 +10,35 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/jessevdk/go-flags"
 
 	sw "github.com/csaf-poc/csaf_distribution/cmd/csaf_api/go"
 )
 
+type options struct {
+	Config string `short:"c" long:"config" description:"File name of the configuration file" value-name:"CFG-FILE" default:"api.toml"`
+}
+
 func main() {
-	log.Printf("Server started")
 
-	c, err := loadConfig("../../docs/examples/api.toml")
+	opts := new(options)
+	_, err := flags.Parse(opts)
 	if err != nil {
-		panic(err)
+		log.Fatalf("error: %v\n", err)
 	}
-	fmt.Println(c)
 
+	log.Println("Loading config")
+	c, err := loadConfig(opts.Config)
+	if err != nil {
+		log.Fatalf("error: %v\n", err)
+	}
+
+	log.Println("Loading API server routes")
 	router := sw.NewRouter()
 
+	log.Println("Starting API server")
 	log.Fatal(http.ListenAndServe(c.BindAddress, router))
 }
