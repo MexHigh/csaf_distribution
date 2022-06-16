@@ -65,7 +65,7 @@ type ROLIE struct {
 
 // API is the API extention of the CSAF feed.
 type API struct {
-	URL               *JSONURL `json:"url"`                // required
+	URL               *string  `json:"url"`                // required
 	SupportedVersions []string `json:"supported_versions"` // required
 }
 
@@ -600,12 +600,12 @@ func (pmd *ProviderMetadata) SetPGP(fingerprint, url string) {
 }
 
 // AddAPIDistribution adds the API distribution to the ProviderMetadata.
-func (pmd *ProviderMetadata) AddAPIDistribution(url JSONURL, supportedVersions []string) {
+func (pmd *ProviderMetadata) AddAPIDistribution(url *string, supportedVersions []string) {
 	// TEMP this is not final !!!
 	// This adds the API as a new array entry to the distribution property
 	pmd.Distributions = append(pmd.Distributions, Distribution{
 		API: &API{
-			URL:               &url,
+			URL:               url,
 			SupportedVersions: supportedVersions,
 		},
 	})

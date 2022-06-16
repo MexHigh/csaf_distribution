@@ -39,7 +39,7 @@ type providerMetadataConfig struct {
 }
 
 type apiConfig struct {
-	EndpointURL       string   `toml:"endpoint_url"`
+	EndpointURL       *string  `toml:"endpoint_url"`
 	SupportedVersions []string `toml:"supported_versions"`
 }
 
