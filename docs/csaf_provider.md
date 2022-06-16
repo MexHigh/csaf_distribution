@@ -28,3 +28,6 @@ Following options are supported in the config file:
  - provider_metadata.list_on_CSAF_aggregators: List on aggregators
  - provider_metadata.mirror_on_CSAF_aggregators: Mirror on aggregators
  - provider_metadata.publisher: Set the publisher. Default: `{"category"= "vendor", "name"= "Example", "namespace"= "https://example.com"}`.
+ - api: Configure the API distribution endpoint
+ - api.endpoint_url: The endpoint URL for the API including scheme, but **excluding version prefix**
+ - api.supported_versions: Array with versions supported by the API endpoint. Example: `["v1", "v2"]`

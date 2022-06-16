@@ -226,6 +226,9 @@ func createProviderMetadata(c *config, wellknownCSAF string) error {
 		return err
 	}
 	pm := csaf.NewProviderMetadataDomain(c.CanonicalURLPrefix, c.modelTLPs())
+	if c.API != nil {
+		pm.AddAPIDistribution(csaf.JSONURL(c.API.EndpointURL), c.API.SupportedVersions)
+	} // else: do not create API distribution
 	c.ProviderMetaData.apply(pm)
 
 	key, err := loadCryptoKeyFromFile(c.OpenPGPPublicKey)

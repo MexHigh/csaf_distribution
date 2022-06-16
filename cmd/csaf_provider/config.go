@@ -38,6 +38,11 @@ type providerMetadataConfig struct {
 	Publisher               *csaf.Publisher `toml:"publisher"`
 }
 
+type apiConfig struct {
+	EndpointURL       string   `toml:"endpoint_url"`
+	SupportedVersions []string `toml:"supported_versions"`
+}
+
 // configs contains the config values for the provider.
 type config struct {
 	Password                *string                 `toml:"password"`
@@ -46,6 +51,7 @@ type config struct {
 	Folder                  string                  `toml:"folder"`
 	Web                     string                  `toml:"web"`
 	TLPs                    []tlp                   `toml:"tlps"`
+	API                     *apiConfig              `toml:"api"`
 	UploadSignature         bool                    `toml:"upload_signature"`
 	CanonicalURLPrefix      string                  `toml:"canonical_url_prefix"`
 	NoPassphrase            bool                    `toml:"no_passphrase"`
