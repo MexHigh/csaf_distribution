@@ -10,7 +10,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -44,14 +43,14 @@ func (w *worker) setupProviderFull(provider *provider) error {
 	}
 
 	// Validate the provider metadata.
-	errors, err := csaf.ValidateProviderMetadata(w.metadataProvider)
+	/*errors, err := csaf.ValidateProviderMetadata(w.metadataProvider)
 	if err != nil {
 		return err
 	}
 	if len(errors) > 0 {
 		return fmt.Errorf(
 			"provider-metadata.json has %d validation issues", len(errors))
-	}
+	}*/
 
 	log.Printf("provider-metadata: %s\n", w.loc)
 	return nil

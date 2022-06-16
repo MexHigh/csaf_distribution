@@ -63,7 +63,7 @@ func LoadProviderMetadataFromURL(client util.Client, url string) *LoadedProvider
 
 	result.Hash = hash.Sum(nil)
 
-	errors, err := ValidateProviderMetadata(result.Document)
+	/*errors, err := ValidateProviderMetadata(result.Document)
 	if err != nil {
 		result.Messages = []string{
 			fmt.Sprintf("%s: Validating against JSON schema failed: %v", url, err)}
@@ -76,7 +76,7 @@ func LoadProviderMetadataFromURL(client util.Client, url string) *LoadedProvider
 		for _, msg := range errors {
 			result.Messages = append(result.Messages, strings.ReplaceAll(msg, `%`, `%%`))
 		}
-	}
+	}*/
 
 	return &result
 }
