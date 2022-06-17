@@ -22,8 +22,9 @@ type options struct {
 	Config string `short:"c" long:"config" description:"File name of the configuration file" value-name:"CFG-FILE" default:"api.toml"`
 }
 
-func main() {
+var allDocuments *csafDocumentCollection
 
+func main() {
 	opts := new(options)
 	_, err := flags.Parse(opts)
 	if err != nil {
@@ -35,6 +36,21 @@ func main() {
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 	}
+
+	log.Println("Loading all CSAF documents")
+	collection, err := gatherAllCSAFDocuments(c.CSAFDocumentsPath, c.Verbose)
+	if err != nil {
+		log.Fatalf("error: %v\n", err)
+	}
+	allDocuments = collection
+	// IDEA: this can be called regularly (e.g. in a gorouting)
+	// to refetch all documents from time to time
+
+	// TEMP
+	/*for _, doc := range (*allDocuments)[csaf.TLPLabelRed] {
+		fmt.Println(doc.Document.Distribution.Tlp.Label)
+		fmt.Println(doc.Document.Title)
+	}*/
 
 	log.Println("Loading API server routes")
 	router := sw.NewRouter()
