@@ -16,13 +16,12 @@ import (
 	"github.com/jessevdk/go-flags"
 
 	sw "github.com/csaf-poc/csaf_distribution/cmd/csaf_api/go"
+	"github.com/csaf-poc/csaf_distribution/csaf"
 )
 
 type options struct {
 	Config string `short:"c" long:"config" description:"File name of the configuration file" value-name:"CFG-FILE" default:"api.toml"`
 }
-
-var allDocuments *csafDocumentCollection
 
 func main() {
 	opts := new(options)
@@ -38,11 +37,10 @@ func main() {
 	}
 
 	log.Println("Loading all CSAF documents")
-	collection, err := gatherAllCSAFDocuments(c.CSAFDocumentsPath, c.Verbose)
+	collection, err := csaf.NewCSAFDocumentCollection(c.CSAFDocumentsPath, c.Verbose)
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 	}
-	allDocuments = collection
 	// IDEA: this can be called regularly (e.g. in a gorouting)
 	// to refetch all documents from time to time
 
@@ -53,6 +51,7 @@ func main() {
 	}*/
 
 	log.Println("Loading API server routes")
+	sw.AllDocuments = collection
 	router := sw.NewRouter()
 
 	log.Println("Starting API server")
