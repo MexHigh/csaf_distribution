@@ -15,7 +15,7 @@ import (
 
 	"github.com/jessevdk/go-flags"
 
-	sw "github.com/csaf-poc/csaf_distribution/cmd/csaf_api/go"
+	"github.com/csaf-poc/csaf_distribution/cmd/csaf_api/router"
 	"github.com/csaf-poc/csaf_distribution/csaf"
 )
 
@@ -51,8 +51,8 @@ func main() {
 	}*/
 
 	log.Println("Loading API server routes")
-	sw.AllDocuments = collection
-	router := sw.NewRouter()
+	router.AllDocuments = collection
+	router := router.NewRouter()
 
 	log.Println("Starting API server")
 	log.Fatal(http.ListenAndServe(c.BindAddress, router))
