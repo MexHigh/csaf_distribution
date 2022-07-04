@@ -66,6 +66,9 @@ func GetByTitle(w http.ResponseWriter, r *http.Request) {
 	test := query.Get("test")
 	fmt.Println(test)
 
+	tlpPerms := getContextVars(r)
+	fmt.Println(tlpPerms)
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	reportSuccess(&w, []csaf.CsafJson{})
 }

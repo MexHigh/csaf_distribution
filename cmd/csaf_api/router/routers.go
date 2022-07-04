@@ -21,8 +21,6 @@ var AllDocuments *csaf.CSAFDocumentCollection
 
 func NewRouter() *mux.Router {
 	router := mux.NewRouter().UseEncodedPath()
-
-	// global middleware
 	router.Use(loggingMiddleware)
 
 	v1Router := router.PathPrefix("/.well-known/csaf/api/v1/").Subrouter()
@@ -34,6 +32,7 @@ func NewRouter() *mux.Router {
 
 	// CSAF routes
 	csafV1Router := v1Router.PathPrefix("/csaf-documents").Subrouter()
+	csafV1Router.Use(authMiddleware)
 	// macro queries
 	csafV1Router.Methods("GET").Path("/by-id/{publisher_namespace}/{tracking_id}").HandlerFunc(GetByID).Name("GetByID")
 	csafV1Router.Methods("GET").Path("/by-title/{title}").HandlerFunc(GetByTitle).Name("GetByTitle")

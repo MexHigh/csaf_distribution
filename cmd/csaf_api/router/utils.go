@@ -7,6 +7,17 @@ import (
 	"github.com/csaf-poc/csaf_distribution/csaf"
 )
 
+// getContextVars is a helper function that extracts
+// all context variables set by middleware. Currently,
+// it returns:
+//
+// TLP labels, the user authenticated himself for ([]csaf.TLPLabel)
+func getContextVars(r *http.Request) []csaf.TLPLabel {
+	// get permissions from auth middleware
+	perms := r.Context().Value(permissionKey).([]csaf.TLPLabel)
+	return perms
+}
+
 func reportError(w *http.ResponseWriter, statusCode int, errcode, errmsg string) {
 	obj := CsafDocumentResponse{
 		Error: &ModelError{
