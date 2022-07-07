@@ -14,16 +14,20 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/csaf-poc/csaf_distribution/cmd/csaf_api/config"
 	"github.com/csaf-poc/csaf_distribution/csaf"
 )
 
-var AllDocuments *csaf.CSAFDocumentCollection
+var (
+	AuthData     []config.AuthData
+	AllDocuments *csaf.CSAFDocumentCollection
+)
 
 func NewRouter() *mux.Router {
 	router := mux.NewRouter().UseEncodedPath()
-	router.Use(loggingMiddleware)
 
 	v1Router := router.PathPrefix("/.well-known/csaf/api/v1/").Subrouter()
+	v1Router.Use(loggingMiddleware)
 
 	// Meta routes
 	v1Router.Methods("GET").Path("/").HandlerFunc(Index).Name("Index")

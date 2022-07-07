@@ -15,6 +15,7 @@ import (
 
 	"github.com/jessevdk/go-flags"
 
+	"github.com/csaf-poc/csaf_distribution/cmd/csaf_api/config"
 	"github.com/csaf-poc/csaf_distribution/cmd/csaf_api/router"
 	"github.com/csaf-poc/csaf_distribution/csaf"
 )
@@ -31,7 +32,7 @@ func main() {
 	}
 
 	log.Println("Loading config")
-	c, err := loadConfig(opts.Config)
+	c, err := config.Load(opts.Config)
 	if err != nil {
 		log.Fatalf("error: %v\n", err)
 	}
@@ -51,6 +52,7 @@ func main() {
 	}*/
 
 	log.Println("Loading API server routes")
+	router.AuthData = c.Auth
 	router.AllDocuments = collection
 	router := router.NewRouter()
 

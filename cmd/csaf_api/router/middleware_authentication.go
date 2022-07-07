@@ -7,11 +7,6 @@ import (
 	"github.com/csaf-poc/csaf_distribution/csaf"
 )
 
-var allowedTokens = []string{
-	"Bearer abc123",
-	"Bearer def456",
-}
-
 type contextKey int
 
 const permissionKey contextKey = 0
@@ -20,21 +15,17 @@ func authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		permissions := make([]csaf.TLPLabel, 0)
 
-		auth := r.Header.Get("authorization")
-		if auth == "" {
-			// no auth data
-			permissions = append(permissions, csaf.TLPLabelWhite)
-		} else {
-			authenticated := false
-			for _, token := range allowedTokens {
-				if token == auth {
-					authenticated = true
+		authHeaderContent := r.Header.Get("authorization")
+		if authHeaderContent != "" {
+			for _, auth := range AuthData {
+				if authHeaderContent == "Bearer "+auth.Token {
+					permissions = append(permissions, csaf.TLPLabelWhite)
+					permissions = append(permissions, auth.AllowedTLPLabels...)
 					break
 				}
 			}
-			if authenticated {
-				permissions = append(permissions, csaf.TLPLabelWhite, csaf.TLPLabelGreen, csaf.TLPLabelAmber, csaf.TLPLabelRed)
-			}
+		} else {
+			permissions = append(permissions, csaf.TLPLabelWhite)
 		}
 
 		// add permissions to request via context

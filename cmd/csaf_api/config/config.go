@@ -1,7 +1,10 @@
-package main
+package config
 
 import (
+	"fmt"
+
 	"github.com/BurntSushi/toml"
+	"github.com/csaf-poc/csaf_distribution/csaf"
 )
 
 const (
@@ -10,7 +13,15 @@ const (
 	defaultCSAFDocumentsPath = "/var/www"
 )
 
-type config struct {
+type AuthData struct {
+	// The token without the "Bearer" part
+	Token string `toml:"token"`
+	// Slice containing all TLP labels this token has clearence for
+	// (TLP:WHITE is always included)
+	AllowedTLPLabels []csaf.TLPLabel `toml:"allowed_tlp_labels"`
+}
+
+type Config struct {
 	// Whether to print verbose logs
 	Verbose bool `toml:"verbose"` // default: false (implicit)
 	// The address with port, the API should listen to.
@@ -18,9 +29,12 @@ type config struct {
 	// The path, where all CSAF documents reside in
 	// (see 'web' provider option (https://github.com/MexHigh/csaf_distribution/blob/main/docs/csaf_provider.md))
 	CSAFDocumentsPath string `toml:"csaf_documents_path"` // default: /var/www
+	// Slice containing tokens that can be used to request
+	// TLP:GREEN, TLP:AMBER or TLP:RED documents
+	Auth []AuthData `toml:"auth"`
 }
 
-func (c *config) setDefaults() {
+func (c *Config) setDefaults() {
 	if c.BindAddress == "" {
 		c.BindAddress = defaultBindAddress
 	}
@@ -29,17 +43,19 @@ func (c *config) setDefaults() {
 	}
 }
 
-func loadConfig(path string) (*config, error) {
+func Load(path string) (*Config, error) {
 	if path == "" {
 		path = defaultConfigPath
 	}
 
-	var c config
+	var c Config
 	if _, err := toml.DecodeFile(path, &c); err != nil {
 		return nil, err
 	}
 
 	c.setDefaults()
+
+	fmt.Println(c.Auth)
 
 	return &c, nil
 }
