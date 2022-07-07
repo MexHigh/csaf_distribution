@@ -47,7 +47,7 @@ func reportSuccess(w *http.ResponseWriter, documents []csaf.CsafJson) {
 
 	v, err := json.MarshalIndent(obj, "", "    ")
 	if err != nil {
-		reportError(w, 500, "UNKNOWN", "Unable to marshal reponse object")
+		reportError(w, 500, "SERVER_ERROR", err.Error())
 		return
 	}
 

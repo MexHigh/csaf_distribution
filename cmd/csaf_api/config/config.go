@@ -1,9 +1,8 @@
 package config
 
 import (
-	"fmt"
-
 	"github.com/BurntSushi/toml"
+
 	"github.com/csaf-poc/csaf_distribution/csaf"
 )
 
@@ -31,7 +30,8 @@ type Config struct {
 	CSAFDocumentsPath string `toml:"csaf_documents_path"` // default: /var/www
 	// Slice containing tokens that can be used to request
 	// TLP:GREEN, TLP:AMBER or TLP:RED documents
-	Auth   []AuthData        `toml:"auth"`
+	Auth []AuthData `toml:"auth"`
+	// Defines, in which CSAF component the API is used in
 	UsedIn csaf.MetadataRole `toml:"used_in"`
 }
 
@@ -55,8 +55,6 @@ func Load(path string) (*Config, error) {
 	}
 
 	c.setDefaults()
-
-	fmt.Println(c.Auth)
 
 	return &c, nil
 }

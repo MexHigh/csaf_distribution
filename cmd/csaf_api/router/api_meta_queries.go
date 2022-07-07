@@ -9,15 +9,129 @@
 package router
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"os"
+	"path"
+
+	"github.com/csaf-poc/csaf_distribution/csaf"
 )
 
+type metadataResponse struct {
+	Error            *ModelError  `json:"error"`
+	ProviderMetadata *interface{} `json:"provider_metadata,omitempty"` // See https://docs.oasis-open.org/csaf/csaf/v2.0/provider_json_schema.json
+	Aggregator       *interface{} `json:"aggregator,omitempty"`        // See https://docs.oasis-open.org/csaf/csaf/v2.0/aggregator_json_schema.json
+}
+
 func GetMetadata(w http.ResponseWriter, r *http.Request) {
+
+	// determine path to the metadata files
+	var (
+		fullPath string
+		provider bool
+	)
+	switch csafRole {
+	case string(csaf.AggregatorAggregator):
+		fullPath = path.Join(docBasePath, "html/.well-known/csaf-aggregator/aggregator.json")
+		provider = false
+	case string(csaf.MetadataRoleTrustedProvider), string(csaf.MetadataRoleProvider):
+		fullPath = path.Join(docBasePath, "html/.well-known/csaf/provider-metadata.json")
+		provider = true
+	default:
+		res := metadataResponse{
+			Error: &ModelError{
+				Errcode: "SERVER_ERROR",
+				Errmsg:  "Unable to determine server role. Check /role endpoint.",
+			},
+		}
+		b, err := json.MarshalIndent(res, "", "    ")
+		if err != nil {
+			panic(err) // json.Marshal should always work
+		}
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(b)
+		return
+	}
+
+	file, err := os.Open(fullPath)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+	bytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		panic(err)
+	}
+	var doc interface{}
+	err = json.Unmarshal(bytes, &doc)
+	if err != nil {
+		panic(err)
+	}
+
+	var (
+		varErrors []string
+		valErr    error
+	)
+	if provider {
+		//varErrors, valErr = csaf.ValidateProviderMetadata(doc)
+	} else {
+		varErrors, valErr = csaf.ValidateAggregator(doc)
+	}
+	if valErr != nil {
+		panic(valErr)
+	}
+	if len(varErrors) > 0 {
+		panic(varErrors)
+	}
+
+	res := metadataResponse{}
+	if provider {
+		res.ProviderMetadata = &doc
+	} else {
+		res.Aggregator = &doc
+	}
+
+	b, err := json.MarshalIndent(res, "", "    ")
+	if err != nil {
+		panic(err) // json.Marshal should always work
+	}
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
+	w.Write(b)
+
+}
+
+type roleResponse struct {
+	Error *ModelError `json:"error"`
+	Role  string      `json:"role,omitempty"`
 }
 
 func GetRole(w http.ResponseWriter, r *http.Request) {
+
+	res := roleResponse{}
+	var status int
+
+	if csafRole == "" {
+		res.Error = &ModelError{
+			Errcode: "ROLE_UNDEFINED",
+			Errmsg:  "API role was not defined. Please contact the adminstrator of this instance.",
+		}
+		status = http.StatusInternalServerError
+	} else {
+		res.Role = csafRole
+		status = http.StatusOK
+	}
+
+	bytes, err := json.MarshalIndent(res, "", "    ")
+	if err != nil {
+		panic(err) // json.Marshal should always work
+	}
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(status)
+	w.Write(bytes)
+
 }

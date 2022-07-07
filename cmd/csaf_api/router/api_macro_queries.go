@@ -62,6 +62,7 @@ func GetByPublisher(w http.ResponseWriter, r *http.Request) {
 
 func GetByTitle(w http.ResponseWriter, r *http.Request) {
 
+	// TODO
 	query := r.URL.Query()
 	test := query.Get("test")
 	fmt.Println(test)

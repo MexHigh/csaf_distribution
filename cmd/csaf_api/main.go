@@ -56,6 +56,7 @@ func main() {
 		string(c.UsedIn),
 		c.Auth,
 		collection,
+		c.CSAFDocumentsPath,
 	)
 
 	log.Println("Starting API server")

@@ -22,13 +22,15 @@ var (
 	csafRole     string
 	authData     []config.AuthData
 	allDocuments *csaf.CSAFDocumentCollection
+	docBasePath  string
 )
 
-func NewAPI(role string, auth []config.AuthData, docs *csaf.CSAFDocumentCollection) *mux.Router {
+func NewAPI(role string, auth []config.AuthData, docs *csaf.CSAFDocumentCollection, docBase string) *mux.Router {
 
 	csafRole = role
 	authData = auth
 	allDocuments = docs
+	docBasePath = docBase
 
 	router := mux.NewRouter().UseEncodedPath()
 
