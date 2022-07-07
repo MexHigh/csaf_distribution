@@ -32,7 +32,7 @@ type Config struct {
 	// TLP:GREEN, TLP:AMBER or TLP:RED documents
 	Auth []AuthData `toml:"auth"`
 	// Defines, in which CSAF component the API is used in
-	UsedIn csaf.MetadataRole `toml:"used_in"`
+	UsedIn csaf.MetadataRole `toml:"used_in"` // TODO check for correct value
 }
 
 func (c *Config) setDefaults() {
