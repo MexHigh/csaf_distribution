@@ -41,7 +41,7 @@ func GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	localCollection := *AllDocuments
+	localCollection := *allDocuments
 	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) bool {
 		return doc.Document.Publisher.Namespace == namespace && doc.Document.Tracking.Id == trackingID
 	})

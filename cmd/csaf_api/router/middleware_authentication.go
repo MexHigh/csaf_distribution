@@ -17,7 +17,7 @@ func authMiddleware(next http.Handler) http.Handler {
 
 		authHeaderContent := r.Header.Get("authorization")
 		if authHeaderContent != "" {
-			for _, auth := range AuthData {
+			for _, auth := range authData {
 				if authHeaderContent == "Bearer "+auth.Token {
 					permissions = append(permissions, csaf.TLPLabelWhite)
 					permissions = append(permissions, auth.AllowedTLPLabels...)

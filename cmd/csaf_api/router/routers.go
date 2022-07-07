@@ -19,11 +19,17 @@ import (
 )
 
 var (
-	AuthData     []config.AuthData
-	AllDocuments *csaf.CSAFDocumentCollection
+	csafRole     string
+	authData     []config.AuthData
+	allDocuments *csaf.CSAFDocumentCollection
 )
 
-func NewRouter() *mux.Router {
+func NewAPI(role string, auth []config.AuthData, docs *csaf.CSAFDocumentCollection) *mux.Router {
+
+	csafRole = role
+	authData = auth
+	allDocuments = docs
+
 	router := mux.NewRouter().UseEncodedPath()
 
 	v1Router := router.PathPrefix("/.well-known/csaf/api/v1/").Subrouter()

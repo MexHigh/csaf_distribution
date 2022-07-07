@@ -31,7 +31,8 @@ type Config struct {
 	CSAFDocumentsPath string `toml:"csaf_documents_path"` // default: /var/www
 	// Slice containing tokens that can be used to request
 	// TLP:GREEN, TLP:AMBER or TLP:RED documents
-	Auth []AuthData `toml:"auth"`
+	Auth   []AuthData        `toml:"auth"`
+	UsedIn csaf.MetadataRole `toml:"used_in"`
 }
 
 func (c *Config) setDefaults() {

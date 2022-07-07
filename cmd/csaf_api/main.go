@@ -52,9 +52,11 @@ func main() {
 	}*/
 
 	log.Println("Loading API server routes")
-	router.AuthData = c.Auth
-	router.AllDocuments = collection
-	router := router.NewRouter()
+	router := router.NewAPI(
+		string(c.UsedIn),
+		c.Auth,
+		collection,
+	)
 
 	log.Println("Starting API server")
 	log.Fatal(http.ListenAndServe(c.BindAddress, router))
