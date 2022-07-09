@@ -25,7 +25,7 @@ func GetByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	namespaceEncoded, ok := vars["publisher_namespace"]
 	if !ok {
-		reportError(&w, 400, "UNKOWN", "Missing namespace parameter")
+		reportError(&w, 400, "BAD_REQUEST", "Missing namespace parameter")
 		return
 	}
 	namespace, err := url.PathUnescape(namespaceEncoded)
@@ -35,20 +35,20 @@ func GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 	trackingID, ok := vars["tracking_id"]
 	if !ok {
-		reportError(&w, 400, "UNKOWN", "Missing tracking ID parameter")
+		reportError(&w, 400, "BAD_REQUEST", "Missing tracking ID parameter")
 		return
 	}
 
 	localCollection := *allDocuments // real copy of allDocuments
 	tlpPerms := getContextVars(r)
 	addTLPFilter(&localCollection, tlpPerms)
-	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) bool {
-		return doc.Document.Publisher.Namespace == namespace && doc.Document.Tracking.Id == trackingID
+	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
+		return doc.Document.Publisher.Namespace == namespace && doc.Document.Tracking.Id == trackingID, nil
 	})
 
 	filtered, err := localCollection.StartFiltering(true)
 	if err != nil {
-		reportError(&w, 500, "UNKOWN", "Error while filtering document collection")
+		reportError(&w, 400, "BAD_REQUEST", err.Error())
 		return
 	}
 
@@ -64,7 +64,7 @@ func GetByTitle(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	titleEncoded, ok := vars["title"]
 	if !ok {
-		reportError(&w, 400, "UNKOWN", "Missing title parameter")
+		reportError(&w, 400, "BAD_REQUEST", "Missing title parameter")
 		return
 	}
 	title, err := url.PathUnescape(titleEncoded)
@@ -78,21 +78,13 @@ func GetByTitle(w http.ResponseWriter, r *http.Request) {
 	addTLPFilter(&localCollection, tlpPerms)
 	addRegularilyUsedFilters(&localCollection, r)
 
-	var filterError error
-	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) bool {
-		matches, err := matchByMatchingParameter(doc.Document.Title, title, r)
-		if err != nil {
-			filterError = err
-		}
-		return matches
+	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
+		return matchByMatchingParameter(doc.Document.Title, title, r)
 	})
-	if filterError != nil {
-		reportError(&w, 400, "BAD_REQUEST", filterError.Error())
-	}
 
 	filtered, err := localCollection.StartFiltering(true)
 	if err != nil {
-		reportError(&w, 500, "UNKOWN", "Error while filtering document collection")
+		reportError(&w, 400, "BAD_REQUEST", err.Error())
 		return
 	}
 

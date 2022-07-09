@@ -23,15 +23,15 @@ func addBeforeFilter(collection *csaf.CSAFDocumentCollection, r *http.Request) {
 		panic(err)
 	}
 
-	collection.AddFilterFunc(func(doc *csaf.CsafJson) bool {
+	collection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
 		rDate, err := time.Parse(timeLayoutISO8601, doc.Document.Tracking.InitialReleaseDate)
 		if err != nil {
-			panic(err)
+			return false, err
 		}
 		if rDate.Before(before) {
-			return true
+			return true, nil
 		} else {
-			return false
+			return false, nil
 		}
 	})
 }
@@ -50,15 +50,15 @@ func addAfterFilter(collection *csaf.CSAFDocumentCollection, r *http.Request) {
 		panic(err)
 	}
 
-	collection.AddFilterFunc(func(doc *csaf.CsafJson) bool {
+	collection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
 		rDate, err := time.Parse(timeLayoutISO8601, doc.Document.Tracking.InitialReleaseDate)
 		if err != nil {
-			panic(err)
+			return false, err
 		}
 		if rDate.After(after) {
-			return true
+			return true, nil
 		} else {
-			return false
+			return false, nil
 		}
 	})
 }
@@ -72,8 +72,8 @@ func addProfileFilter(collection *csaf.CSAFDocumentCollection, r *http.Request) 
 		return
 	}
 
-	collection.AddFilterFunc(func(doc *csaf.CsafJson) bool {
-		return doc.Document.Category == profile
+	collection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
+		return doc.Document.Category == profile, nil
 	})
 }
 
@@ -86,8 +86,8 @@ func addTrackingStatusFilter(collection *csaf.CSAFDocumentCollection, r *http.Re
 		return
 	}
 
-	collection.AddFilterFunc(func(doc *csaf.CsafJson) bool {
-		return doc.Document.Tracking.Status == csaf.CsafJsonDocumentTrackingStatus(trackingState)
+	collection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
+		return doc.Document.Tracking.Status == csaf.CsafJsonDocumentTrackingStatus(trackingState), nil
 	})
 }
 

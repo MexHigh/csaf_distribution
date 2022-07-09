@@ -22,7 +22,7 @@ func getContextVars(r *http.Request) []csaf.TLPLabel {
 }
 
 func addTLPFilter(collection *csaf.CSAFDocumentCollection, tlpPerms []csaf.TLPLabel) {
-	collection.AddFilterFunc(func(doc *csaf.CsafJson) bool {
+	collection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
 		allowed := false
 		for _, label := range tlpPerms {
 			if doc.Document.Distribution.Tlp.Label == label {
@@ -30,7 +30,7 @@ func addTLPFilter(collection *csaf.CSAFDocumentCollection, tlpPerms []csaf.TLPLa
 				break
 			}
 		}
-		return allowed
+		return allowed, nil
 	})
 }
 

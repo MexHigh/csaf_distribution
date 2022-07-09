@@ -17,7 +17,7 @@ import (
 // with it.
 type CSAFDocumentCollection struct {
 	documents []CsafJson
-	filters   []func(doc *CsafJson) bool
+	filters   []func(doc *CsafJson) (bool, error)
 }
 
 // AddFilterFunc adds at least one filter function to the collection object
@@ -25,14 +25,14 @@ type CSAFDocumentCollection struct {
 // function at once.
 //
 // To execute all filter functions, call StartFiltering().
-func (dc *CSAFDocumentCollection) AddFilterFunc(f ...func(doc *CsafJson) bool) {
+func (dc *CSAFDocumentCollection) AddFilterFunc(f ...func(doc *CsafJson) (bool, error)) {
 	dc.filters = append(dc.filters, f...)
 }
 
 // ClearFilterFuncs removes all filter functions. When calling
 // StartFiltering, the filter function get cleared automatically.
 func (dc *CSAFDocumentCollection) ClearFilterFuncs() {
-	dc.filters = make([]func(doc *CsafJson) bool, 0)
+	dc.filters = make([]func(doc *CsafJson) (bool, error), 0)
 }
 
 // StartFiltering executes all filter functions registered by
@@ -44,7 +44,11 @@ func (dc *CSAFDocumentCollection) StartFiltering(verbose bool) ([]CsafJson, erro
 	for _, document := range dc.documents {
 		matched := true
 		for _, filter := range dc.filters {
-			if !filter(&document) {
+			m, err := filter(&document)
+			if err != nil {
+				return nil, err
+			}
+			if !m {
 				matched = false
 				break
 			}
@@ -148,6 +152,6 @@ func NewCSAFDocumentCollection(basePath string, verbose bool) (*CSAFDocumentColl
 
 	return &CSAFDocumentCollection{
 		documents: collection,
-		filters:   make([]func(doc *CsafJson) bool, 0),
+		filters:   make([]func(doc *CsafJson) (bool, error), 0),
 	}, nil
 }
