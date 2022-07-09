@@ -147,19 +147,12 @@ type CsafJsonDocumentDistribution struct {
 // Provides details about the TLP classification of the document.
 type CsafJsonDocumentDistributionTlp struct {
 	// Provides the TLP label of the document.
-	Label CsafJsonDocumentDistributionTlpLabel `json:"label"`
+	Label TLPLabel `json:"label"`
 
 	// Provides a URL where to find the textual description of the TLP version which
 	// is used in this document. Default is the URL to the definition by FIRST.
 	Url string `json:"url,omitempty"`
 }
-
-type CsafJsonDocumentDistributionTlpLabel string
-
-const CsafJsonDocumentDistributionTlpLabelAMBER CsafJsonDocumentDistributionTlpLabel = "AMBER"
-const CsafJsonDocumentDistributionTlpLabelGREEN CsafJsonDocumentDistributionTlpLabel = "GREEN"
-const CsafJsonDocumentDistributionTlpLabelRED CsafJsonDocumentDistributionTlpLabel = "RED"
-const CsafJsonDocumentDistributionTlpLabelWHITE CsafJsonDocumentDistributionTlpLabel = "WHITE"
 
 // Provides information about the publisher of the document.
 type CsafJsonDocumentPublisher struct {
@@ -447,26 +440,6 @@ func (j *CsafJsonProductTreeRelationshipsElemCategory) UnmarshalJSON(b []byte) e
 		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_CsafJsonProductTreeRelationshipsElemCategory, v)
 	}
 	*j = CsafJsonProductTreeRelationshipsElemCategory(v)
-	return nil
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (j *CsafJsonDocumentDistributionTlpLabel) UnmarshalJSON(b []byte) error {
-	var v string
-	if err := json.Unmarshal(b, &v); err != nil {
-		return err
-	}
-	var ok bool
-	for _, expected := range enumValues_CsafJsonDocumentDistributionTlpLabel {
-		if reflect.DeepEqual(v, expected) {
-			ok = true
-			break
-		}
-	}
-	if !ok {
-		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_CsafJsonDocumentDistributionTlpLabel, v)
-	}
-	*j = CsafJsonDocumentDistributionTlpLabel(v)
 	return nil
 }
 
