@@ -45,13 +45,21 @@ func (dc *CSAFDocumentCollection) StartFiltering(verbose bool) error {
 		}
 		newDocuments := make([]CsafJson, 0)
 		for _, document := range documents {
+			matched := true
 			for _, filter := range dc.filters {
-				if filter(&document) {
-					newDocuments = append(newDocuments, document)
+				if !filter(&document) {
+					matched = false
+					break
 				}
+			}
+			if matched {
+				newDocuments = append(newDocuments, document)
 			}
 		}
 		dc.documents[tlp] = newDocuments
+		if verbose {
+			log.Printf("Matched %d documents", len(newDocuments))
+		}
 	}
 	// remove all used filters
 	dc.ClearFilterFuncs()

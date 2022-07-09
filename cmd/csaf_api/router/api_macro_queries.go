@@ -24,6 +24,8 @@ func GetByCVE(w http.ResponseWriter, r *http.Request) {
 
 func GetByID(w http.ResponseWriter, r *http.Request) {
 
+	tlpPerms := getContextVars(r)
+
 	vars := mux.Vars(r)
 	namespaceEncoded, ok := vars["publisher_namespace"]
 	if !ok {
@@ -44,6 +46,16 @@ func GetByID(w http.ResponseWriter, r *http.Request) {
 	localCollection := *allDocuments
 	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) bool {
 		return doc.Document.Publisher.Namespace == namespace && doc.Document.Tracking.Id == trackingID
+	})
+	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) bool {
+		allowed := false
+		for _, label := range tlpPerms {
+			if doc.Document.Distribution.Tlp.Label == label {
+				allowed = true
+				break
+			}
+		}
+		return allowed
 	})
 	if err := localCollection.StartFiltering(true); err != nil {
 		reportError(&w, 500, "UNKOWN", "Error while filtering document collection")
