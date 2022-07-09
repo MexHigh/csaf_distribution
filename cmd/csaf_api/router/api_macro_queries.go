@@ -9,7 +9,6 @@
 package router
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 
@@ -23,9 +22,6 @@ func GetByCVE(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetByID(w http.ResponseWriter, r *http.Request) {
-
-	tlpPerms := getContextVars(r)
-
 	vars := mux.Vars(r)
 	namespaceEncoded, ok := vars["publisher_namespace"]
 	if !ok {
@@ -43,28 +39,20 @@ func GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	localCollection := *allDocuments
+	localCollection := *allDocuments // real copy of allDocuments
+	tlpPerms := getContextVars(r)
+	addTLPFilter(&localCollection, tlpPerms)
 	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) bool {
 		return doc.Document.Publisher.Namespace == namespace && doc.Document.Tracking.Id == trackingID
 	})
-	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) bool {
-		allowed := false
-		for _, label := range tlpPerms {
-			if doc.Document.Distribution.Tlp.Label == label {
-				allowed = true
-				break
-			}
-		}
-		return allowed
-	})
-	if err := localCollection.StartFiltering(true); err != nil {
+
+	filtered, err := localCollection.StartFiltering(true)
+	if err != nil {
 		reportError(&w, 500, "UNKOWN", "Error while filtering document collection")
 		return
 	}
 
-	filtered := localCollection.GetCurrentDocumentsMerged()
 	reportSuccess(&w, filtered)
-
 }
 
 func GetByPublisher(w http.ResponseWriter, r *http.Request) {
@@ -73,15 +61,40 @@ func GetByPublisher(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetByTitle(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	titleEncoded, ok := vars["title"]
+	if !ok {
+		reportError(&w, 400, "UNKOWN", "Missing title parameter")
+		return
+	}
+	title, err := url.PathUnescape(titleEncoded)
+	if err != nil {
+		reportError(&w, 500, "UNKOWN", "Unable to URL-unescape title parameter")
+		return
+	}
 
-	// TODO
-	query := r.URL.Query()
-	test := query.Get("test")
-	fmt.Println(test)
-
+	localCollection := *allDocuments // real copy of allDocuments
 	tlpPerms := getContextVars(r)
-	fmt.Println(tlpPerms)
+	addTLPFilter(&localCollection, tlpPerms)
+	addRegularilyUsedFilters(&localCollection, r)
 
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	reportSuccess(&w, []csaf.CsafJson{})
+	var filterError error
+	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) bool {
+		matches, err := matchByMatchingParameter(doc.Document.Title, title, r)
+		if err != nil {
+			filterError = err
+		}
+		return matches
+	})
+	if filterError != nil {
+		reportError(&w, 400, "BAD_REQUEST", filterError.Error())
+	}
+
+	filtered, err := localCollection.StartFiltering(true)
+	if err != nil {
+		reportError(&w, 500, "UNKOWN", "Error while filtering document collection")
+		return
+	}
+
+	reportSuccess(&w, filtered)
 }

@@ -16,7 +16,7 @@ import (
 // provider or aggregator and provides methods to interact
 // with it.
 type CSAFDocumentCollection struct {
-	documents map[TLPLabel][]CsafJson
+	documents []CsafJson
 	filters   []func(doc *CsafJson) bool
 }
 
@@ -38,58 +38,34 @@ func (dc *CSAFDocumentCollection) ClearFilterFuncs() {
 // StartFiltering executes all filter functions registered by
 // AddFilterFunc() and applies the result directly to the collection.
 // Afterwards, the registered filter functions are deleted.
-func (dc *CSAFDocumentCollection) StartFiltering(verbose bool) error {
-	for tlp, documents := range dc.documents {
-		if verbose {
-			log.Printf("Processing TLP:%s documents", string(tlp))
-		}
-		newDocuments := make([]CsafJson, 0)
-		for _, document := range documents {
-			matched := true
-			for _, filter := range dc.filters {
-				if !filter(&document) {
-					matched = false
-					break
-				}
-			}
-			if matched {
-				newDocuments = append(newDocuments, document)
+func (dc *CSAFDocumentCollection) StartFiltering(verbose bool) ([]CsafJson, error) {
+	filteredDocuments := make([]CsafJson, 0)
+
+	for _, document := range dc.documents {
+		matched := true
+		for _, filter := range dc.filters {
+			if !filter(&document) {
+				matched = false
+				break
 			}
 		}
-		dc.documents[tlp] = newDocuments
-		if verbose {
-			log.Printf("Matched %d documents", len(newDocuments))
+		if matched {
+			filteredDocuments = append(filteredDocuments, document)
 		}
+	}
+
+	if verbose {
+		log.Printf("Matched %d documents", len(filteredDocuments))
 	}
 	// remove all used filters
 	dc.ClearFilterFuncs()
-	return nil
-}
-
-// GetCurrentDocuments returns a CSAF document slice mapped to TLP labels.
-func (dc *CSAFDocumentCollection) GetCurrentDocuments() map[TLPLabel][]CsafJson {
-	return dc.documents
-}
-
-// GetCurrentDocumentsMerged returns a CSAF document slice
-// merged from all TLP labels.
-func (dc *CSAFDocumentCollection) GetCurrentDocumentsMerged() []CsafJson {
-	merged := make([]CsafJson, 0)
-	for _, documents := range dc.documents {
-		merged = append(merged, documents...)
-	}
-	return merged
+	return filteredDocuments, nil
 }
 
 // NewCSAFDocumentCollection walks the basePath directory recursively to gather
 // all CSAF documents within it and returns a new CSAFDocumentCollection instance.
 func NewCSAFDocumentCollection(basePath string, verbose bool) (*CSAFDocumentCollection, error) {
-	collection := map[TLPLabel][]CsafJson{
-		"WHITE": make([]CsafJson, 0),
-		"GREEN": make([]CsafJson, 0),
-		"AMBER": make([]CsafJson, 0),
-		"RED":   make([]CsafJson, 0),
-	}
+	collection := make([]CsafJson, 0)
 
 	// regex for json files
 	jsonFileRe, err := regexp.Compile("^(.*).json$")
@@ -154,7 +130,7 @@ func NewCSAFDocumentCollection(basePath string, verbose bool) (*CSAFDocumentColl
 		tlpLabel := TLPLabel(csafDoc.Document.Distribution.Tlp.Label)
 		switch tlpLabel {
 		case TLPLabelWhite, TLPLabelGreen, TLPLabelAmber, TLPLabelRed:
-			collection[tlpLabel] = append(collection[tlpLabel], csafDoc)
+			collection = append(collection, csafDoc)
 		default:
 			return fmt.Errorf("encountered csaf document with unknown TLP label: %s", string(tlpLabel))
 		}
@@ -167,10 +143,7 @@ func NewCSAFDocumentCollection(basePath string, verbose bool) (*CSAFDocumentColl
 
 	// print report
 	if verbose {
-		log.Printf("Loaded %d CSAF documents with TLP:WHITE", len(collection[TLPLabelWhite]))
-		log.Printf("Loaded %d CSAF documents with TLP:GREEN", len(collection[TLPLabelGreen]))
-		log.Printf("Loaded %d CSAF documents with TLP:AMBER", len(collection[TLPLabelAmber]))
-		log.Printf("Loaded %d CSAF documents with TLP:RED", len(collection[TLPLabelRed]))
+		log.Printf("Loaded %d CSAF documents", len(collection))
 	}
 
 	return &CSAFDocumentCollection{

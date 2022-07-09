@@ -2,7 +2,10 @@ package router
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"regexp"
+	"strings"
 
 	"github.com/csaf-poc/csaf_distribution/csaf"
 )
@@ -16,6 +19,43 @@ func getContextVars(r *http.Request) []csaf.TLPLabel {
 	// get permissions from auth middleware
 	perms := r.Context().Value(permissionKey).([]csaf.TLPLabel)
 	return perms
+}
+
+func addTLPFilter(collection *csaf.CSAFDocumentCollection, tlpPerms []csaf.TLPLabel) {
+	collection.AddFilterFunc(func(doc *csaf.CsafJson) bool {
+		allowed := false
+		for _, label := range tlpPerms {
+			if doc.Document.Distribution.Tlp.Label == label {
+				allowed = true
+				break
+			}
+		}
+		return allowed
+	})
+}
+
+func matchByMatchingParameter(searchString, toMatchString string, r *http.Request) (bool, error) {
+	query := r.URL.Query()
+	matching := query.Get("matching")
+	if matching == "" {
+		// if not set, matching is exact
+		return searchString == toMatchString, nil
+	}
+
+	switch matching {
+	case "exact":
+		return searchString == toMatchString, nil
+	case "regex":
+		return regexp.MatchString(toMatchString, searchString)
+	case "begins-with":
+		return strings.HasPrefix(searchString, toMatchString), nil
+	case "ends-with":
+		return strings.HasSuffix(searchString, toMatchString), nil
+	case "contains":
+		return strings.Contains(searchString, toMatchString), nil
+	default:
+		return false, fmt.Errorf("matching parameter value %s is unknown", matching)
+	}
 }
 
 func reportError(w *http.ResponseWriter, statusCode int, errcode, errmsg string) {
