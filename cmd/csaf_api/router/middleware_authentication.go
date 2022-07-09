@@ -24,7 +24,15 @@ func authMiddleware(next http.Handler) http.Handler {
 					break
 				}
 			}
+			if len(permissions) == 0 {
+				// no token matched
+				// to fulfill requirement IMP-R5, return a "401 Unauthorized" error
+				reportError(&w, 401, "AUTH_INVALID", "The specified API token is not known by the server")
+				return // do not call next.ServeHTTP to stop middleware chain
+			}
 		} else {
+			// no token provided
+			// give permissions to TLP:WHITE (requirement IMP)
 			permissions = append(permissions, csaf.TLPLabelWhite)
 		}
 

@@ -19,13 +19,11 @@ func getContextVars(r *http.Request) []csaf.TLPLabel {
 }
 
 func reportError(w *http.ResponseWriter, statusCode int, errcode, errmsg string) {
-	obj := CsafDocumentResponse{
+	obj := GenericResponse{
 		Error: &ModelError{
 			Errcode: errcode,
 			Errmsg:  errmsg,
 		},
-		DocumentsFound: 0,
-		Documents:      nil,
 	}
 
 	v, err := json.Marshal(obj)
@@ -40,9 +38,18 @@ func reportError(w *http.ResponseWriter, statusCode int, errcode, errmsg string)
 
 func reportSuccess(w *http.ResponseWriter, documents []csaf.CsafJson) {
 	obj := CsafDocumentResponse{
-		Error:          nil,
+		GenericResponse: GenericResponse{
+			Error: nil,
+		},
 		DocumentsFound: len(documents),
-		Documents:      documents,
+		Documents:      make([]CsafDocumentResponseDocuments, 0),
+	}
+
+	for _, doc := range documents {
+		tDoc := doc // needed to prevent race conditions !!! (sometimes, documents are added twice)
+		obj.Documents = append(obj.Documents, CsafDocumentResponseDocuments{
+			Content: &tDoc,
+		})
 	}
 
 	v, err := json.MarshalIndent(obj, "", "    ")
