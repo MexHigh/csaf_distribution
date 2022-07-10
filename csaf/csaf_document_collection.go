@@ -12,11 +12,21 @@ import (
 	"strings"
 )
 
+// CSAFDocumentWrapper contains the actual document payload,
+// it's hashes, signatures and a path relative to the
+// CSAFDocumentCollections basePath.
+type CSAFDocumentWrapper struct {
+	Path      string
+	Document  *CsafJson
+	Hashes    *map[string]string
+	Signature *string
+}
+
 // CSAFDocumentCollection holds all CSAF documents for the
 // provider or aggregator and provides methods to interact
 // with it.
 type CSAFDocumentCollection struct {
-	documents []CsafJson
+	documents []CSAFDocumentWrapper
 	filters   []func(doc *CsafJson) (bool, error)
 }
 
@@ -38,13 +48,13 @@ func (dc *CSAFDocumentCollection) ClearFilterFuncs() {
 // StartFiltering executes all filter functions registered by
 // AddFilterFunc() and applies the result directly to the collection.
 // Afterwards, the registered filter functions are deleted.
-func (dc *CSAFDocumentCollection) StartFiltering(verbose bool) ([]CsafJson, error) {
-	filteredDocuments := make([]CsafJson, 0)
+func (dc *CSAFDocumentCollection) StartFiltering(verbose bool) ([]CSAFDocumentWrapper, error) {
+	filteredDocuments := make([]CSAFDocumentWrapper, 0)
 
 	for _, document := range dc.documents {
 		matched := true
 		for _, filter := range dc.filters {
-			m, err := filter(&document)
+			m, err := filter(document.Document)
 			if err != nil {
 				return nil, err
 			}
@@ -69,7 +79,7 @@ func (dc *CSAFDocumentCollection) StartFiltering(verbose bool) ([]CsafJson, erro
 // NewCSAFDocumentCollection walks the basePath directory recursively to gather
 // all CSAF documents within it and returns a new CSAFDocumentCollection instance.
 func NewCSAFDocumentCollection(basePath string, verbose bool) (*CSAFDocumentCollection, error) {
-	collection := make([]CsafJson, 0)
+	collection := make([]CSAFDocumentWrapper, 0)
 
 	// regex for json files
 	jsonFileRe, err := regexp.Compile("^(.*).json$")
@@ -130,11 +140,50 @@ func NewCSAFDocumentCollection(basePath string, verbose bool) (*CSAFDocumentColl
 			return err
 		}
 
+		// read signature
+		var ascString string
+		if ascFile, err := os.Open(path + ".asc"); err == nil {
+			ascBytes, err := ioutil.ReadAll(ascFile)
+			if err != nil {
+				return err
+			}
+			ascFile.Close()
+			ascString = string(ascBytes)
+		}
+
+		// read hashes
+		var sha256String string
+		if sha256File, err := os.Open(path + ".sha256"); err == nil {
+			sha256Bytes, err := ioutil.ReadAll(sha256File)
+			if err != nil {
+				return err
+			}
+			sha256File.Close()
+			sha256String = strings.Split(string(sha256Bytes), " ")[0] // strip filename
+		}
+		var sha512String string
+		if sha512File, err := os.Open(path + ".sha512"); err == nil {
+			sha512Bytes, err := ioutil.ReadAll(sha512File)
+			if err != nil {
+				return err
+			}
+			sha512File.Close()
+			sha512String = strings.Split(string(sha512Bytes), " ")[0] // strip filename
+		}
+
 		// add the document to collection, depending on its TLP label
 		tlpLabel := TLPLabel(csafDoc.Document.Distribution.Tlp.Label)
 		switch tlpLabel {
 		case TLPLabelWhite, TLPLabelGreen, TLPLabelAmber, TLPLabelRed:
-			collection = append(collection, csafDoc)
+			collection = append(collection, CSAFDocumentWrapper{
+				Path:      strings.Split(path, basePath)[1], // path relative to basePath
+				Document:  &csafDoc,
+				Signature: &ascString,
+				Hashes: &map[string]string{
+					"sha256": sha256String,
+					"sha512": sha512String,
+				},
+			})
 		default:
 			return fmt.Errorf("encountered csaf document with unknown TLP label: %s", string(tlpLabel))
 		}

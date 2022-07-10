@@ -116,7 +116,8 @@ func GetByCVE(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reportSuccess(&w, filtered)
+	withHashes, withSignatures := getWithParameters(r)
+	reportSuccess(&w, filtered, withHashes, withSignatures)
 }
 
 func GetByID(w http.ResponseWriter, r *http.Request) {
@@ -152,7 +153,8 @@ func GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reportSuccess(&w, filtered)
+	withHashes, withSignatures := getWithParameters(r)
+	reportSuccess(&w, filtered, withHashes, withSignatures)
 }
 
 func GetByPublisher(w http.ResponseWriter, r *http.Request) {
@@ -205,7 +207,8 @@ func GetByPublisher(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reportSuccess(&w, filtered)
+	withHashes, withSignatures := getWithParameters(r)
+	reportSuccess(&w, filtered, withHashes, withSignatures)
 }
 
 func GetByTitle(w http.ResponseWriter, r *http.Request) {
@@ -241,5 +244,6 @@ func GetByTitle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reportSuccess(&w, filtered)
+	withHashes, withSignatures := getWithParameters(r)
+	reportSuccess(&w, filtered, withHashes, withSignatures)
 }

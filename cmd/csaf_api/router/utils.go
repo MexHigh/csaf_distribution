@@ -23,6 +23,14 @@ func getContextVars(r *http.Request) []csaf.TLPLabel {
 	return perms
 }
 
+// getWithParameters reads the "?with_*" parameters and returns
+// wheather they are set.
+func getWithParameters(r *http.Request) (withHashes, withSignature bool) {
+	query := r.URL.Query()
+	// no need to check values, as the parameters are expected to be bool
+	return query.Has("with_hashes"), query.Has("with_signature")
+}
+
 func addTLPFilter(collection *csaf.CSAFDocumentCollection, tlpPerms []csaf.TLPLabel) {
 	collection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
 		allowed := false
@@ -67,12 +75,6 @@ func matchCVSSScore(score string, expressions ...string) (bool, error) {
 		}
 	}
 	return allMatched, nil
-
-	/*eval, err := gvalBaseArithLang.NewEvaluable(score + expression)
-	if err != nil {
-		return false, err
-	}
-	return eval.EvalBool(context.Background(), nil)*/
 }
 
 // matchByMatchingParameter matches two strings depending on the method set in "?matching=".
@@ -122,20 +124,27 @@ func reportError(w *http.ResponseWriter, statusCode int, errcode, errmsg string)
 	(*w).Write(v)
 }
 
-func reportSuccess(w *http.ResponseWriter, documents []csaf.CsafJson) {
-	obj := CsafDocumentResponse{
+func reportSuccess(w *http.ResponseWriter, documents []csaf.CSAFDocumentWrapper, withHash, withSignature bool) {
+	obj := CSAFDocumentResponse{
 		GenericResponse: GenericResponse{
 			Error: nil,
 		},
 		DocumentsFound: len(documents),
-		Documents:      make([]CsafDocumentResponseDocuments, 0),
+		Documents:      make([]CSAFDocumentResponseDocuments, 0),
 	}
 
 	for _, doc := range documents {
 		tDoc := doc // needed to prevent race conditions !!! (sometimes, documents are added twice)
-		obj.Documents = append(obj.Documents, CsafDocumentResponseDocuments{
-			Content: &tDoc,
-		})
+		toAdd := CSAFDocumentResponseDocuments{
+			Content: tDoc.Document,
+		}
+		if withHash {
+			toAdd.Hashes = tDoc.Hashes
+		}
+		if withSignature {
+			toAdd.Signature = tDoc.Signature
+		}
+		obj.Documents = append(obj.Documents, toAdd)
 	}
 
 	v, err := json.MarshalIndent(obj, "", "    ")

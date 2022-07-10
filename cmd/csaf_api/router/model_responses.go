@@ -19,19 +19,14 @@ type GenericResponse struct {
 	Error *ModelError `json:"error"`
 }
 
-type CsafDocumentResponseHash struct {
-	Sha256 string `json:"sha256,omitempty"`
-	Sha512 string `json:"sha512,omitempty"`
+type CSAFDocumentResponseDocuments struct {
+	Content   *csaf.CsafJson     `json:"content"`
+	Signature *string            `json:"signature,omitempty"`
+	Hashes    *map[string]string `json:"hashes,omitempty"`
 }
 
-type CsafDocumentResponseDocuments struct {
-	Content   *csaf.CsafJson            `json:"content"`
-	Signature string                    `json:"signature,omitempty"`
-	Hash      *CsafDocumentResponseHash `json:"hash,omitempty"`
-}
-
-type CsafDocumentResponse struct {
+type CSAFDocumentResponse struct {
 	GenericResponse `json:",inline"`
 	DocumentsFound  int                             `json:"documents_found"`
-	Documents       []CsafDocumentResponseDocuments `json:"documents"`
+	Documents       []CSAFDocumentResponseDocuments `json:"documents"`
 }
