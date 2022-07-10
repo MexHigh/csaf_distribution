@@ -76,7 +76,10 @@ func GetByTitle(w http.ResponseWriter, r *http.Request) {
 	localCollection := *allDocuments // real copy of allDocuments
 	tlpPerms := getContextVars(r)
 	addTLPFilter(&localCollection, tlpPerms)
-	addRegularilyUsedFilters(&localCollection, r)
+	if err := addRegularilyUsedFilters(&localCollection, r); err != nil {
+		reportError(&w, 400, "BAD_REQUEST", err.Error())
+		return
+	}
 
 	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
 		return matchByMatchingParameter(doc.Document.Title, title, r)
