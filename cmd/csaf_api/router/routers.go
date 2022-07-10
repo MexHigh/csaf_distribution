@@ -54,6 +54,7 @@ func NewAPI(role string, auth []config.AuthData, docs *csaf.CSAFDocumentCollecti
 
 	// CSAF routes
 	csafV1Router := v1Router.PathPrefix("/csaf-documents").Subrouter()
+	csafV1Router.Use(filterResetMiddleware)
 	csafV1Router.Use(authMiddleware)
 	// macro queries
 	csafV1Router.Methods("GET").Path("/by-id/{publisher_namespace}/{tracking_id}").HandlerFunc(GetByID).Name("GetByID")
