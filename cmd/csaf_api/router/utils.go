@@ -34,6 +34,11 @@ func addTLPFilter(collection *csaf.CSAFDocumentCollection, tlpPerms []csaf.TLPLa
 	})
 }
 
+// matchByMatchingParameter matches two strings depending on the method set in "?matching=".
+// If it is not set or empty, exact matching is performed.
+//
+// Possible values are "exact", "regex", "begins-with", "ends-with" and "contains".
+// If other values are set, an error is returned.
 func matchByMatchingParameter(searchString, toMatchString string, r *http.Request) (bool, error) {
 	query := r.URL.Query()
 	matching := query.Get("matching")

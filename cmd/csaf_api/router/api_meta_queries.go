@@ -25,7 +25,6 @@ type metadataResponse struct {
 }
 
 func GetMetadata(w http.ResponseWriter, r *http.Request) {
-
 	// determine path to the metadata files
 	var (
 		fullPath string
@@ -57,17 +56,17 @@ func GetMetadata(w http.ResponseWriter, r *http.Request) {
 
 	file, err := os.Open(fullPath)
 	if err != nil {
-		panic(err)
+		panic(err) // TODO
 	}
 	defer file.Close()
 	bytes, err := ioutil.ReadAll(file)
 	if err != nil {
-		panic(err)
+		panic(err) // TODO
 	}
 	var doc interface{}
 	err = json.Unmarshal(bytes, &doc)
 	if err != nil {
-		panic(err)
+		panic(err) // TODO
 	}
 
 	var (
@@ -80,10 +79,10 @@ func GetMetadata(w http.ResponseWriter, r *http.Request) {
 		varErrors, valErr = csaf.ValidateAggregator(doc)
 	}
 	if valErr != nil {
-		panic(valErr)
+		panic(valErr) // TODO
 	}
 	if len(varErrors) > 0 {
-		panic(varErrors)
+		panic(varErrors) // TODO
 	}
 
 	res := metadataResponse{}
@@ -101,7 +100,6 @@ func GetMetadata(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write(b)
-
 }
 
 type roleResponse struct {
@@ -110,7 +108,6 @@ type roleResponse struct {
 }
 
 func GetRole(w http.ResponseWriter, r *http.Request) {
-
 	res := roleResponse{}
 	var status int
 
@@ -133,5 +130,4 @@ func GetRole(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(status)
 	w.Write(bytes)
-
 }

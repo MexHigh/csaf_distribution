@@ -19,8 +19,39 @@ import (
 )
 
 func GetByCVE(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	vars := mux.Vars(r)
+	cveEncoded, ok := vars["cve"]
+	if !ok {
+		reportError(&w, 400, "BAD_REQUEST", "Missing cve parameter")
+		return
+	}
+	cve, err := url.PathUnescape(cveEncoded)
+	if err != nil {
+		reportError(&w, 500, "UNKOWN", "Unable to URL-unescape cve parameter")
+		return
+	}
+
+	localCollection := *allDocuments // shallow copy of allDocuments
+	tlpPerms := getContextVars(r)
+	addTLPFilter(&localCollection, tlpPerms)
+
+	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
+		for _, vuln := range doc.Vulnerabilities {
+			if vuln.Cve != nil && *vuln.Cve == cve {
+				return true, nil
+			}
+		}
+		return false, nil
+	})
+
+	filtered, err := localCollection.StartFiltering(true)
+	if err != nil {
+		reportError(&w, 400, "BAD_REQUEST", err.Error())
+		localCollection.ClearFilterFuncs()
+		return
+	}
+
+	reportSuccess(&w, filtered)
 }
 
 func GetByID(w http.ResponseWriter, r *http.Request) {
