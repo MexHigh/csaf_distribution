@@ -1,12 +1,14 @@
 package router
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
 
+	"github.com/PaesslerAG/gval"
 	"github.com/csaf-poc/csaf_distribution/csaf"
 )
 
@@ -32,6 +34,45 @@ func addTLPFilter(collection *csaf.CSAFDocumentCollection, tlpPerms []csaf.TLPLa
 		}
 		return allowed, nil
 	})
+}
+
+var gvalBaseArithLang = gval.NewLanguage(gval.Base(), gval.Arithmetic())
+
+// matchCVSSScore uses gval Base+Arithmetic language to test if cvss scores
+// match. It concatenates the score from a CSAF document ("score")
+// with each item in expressions usually set as query paramter.
+// Every expression must match. If len(expressions) is 0, (true, nil)
+// is returned.
+//
+// Example:
+//
+// score = "8.0";
+// expressions = [">7", "<9"]
+//
+// matchCVSSScore(score, expressions...) = (true, nil)
+func matchCVSSScore(score string, expressions ...string) (bool, error) {
+	allMatched := true
+	for _, expression := range expressions {
+		eval, err := gvalBaseArithLang.NewEvaluable(score + expression)
+		if err != nil {
+			return false, err
+		}
+		val, err := eval.EvalBool(context.Background(), nil)
+		if err != nil {
+			return false, err
+		}
+		if !val {
+			allMatched = false
+			break
+		}
+	}
+	return allMatched, nil
+
+	/*eval, err := gvalBaseArithLang.NewEvaluable(score + expression)
+	if err != nil {
+		return false, err
+	}
+	return eval.EvalBool(context.Background(), nil)*/
 }
 
 // matchByMatchingParameter matches two strings depending on the method set in "?matching=".

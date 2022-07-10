@@ -1288,14 +1288,25 @@ const CsafJsonVulnerabilitiesElemRemediationsElemRestartRequiredCategorySystem C
 const CsafJsonVulnerabilitiesElemRemediationsElemRestartRequiredCategoryVulnerableComponent CsafJsonVulnerabilitiesElemRemediationsElemRestartRequiredCategory = "vulnerable_component"
 const CsafJsonVulnerabilitiesElemRemediationsElemRestartRequiredCategoryZone CsafJsonVulnerabilitiesElemRemediationsElemRestartRequiredCategory = "zone"
 
+// CVSSScoreTemp is a temporary struct, that mimes the baseScore property
+// in https://www.first.org/cvss/cvss-v2.0.json, https://www.first.org/cvss/cvss-v3.0.json
+// and https://www.first.org/cvss/cvss-v3.1.json
+//
+// This should later be replaced with a proper model.
+//
+// TODO
+type CVSSScoreTemp struct {
+	BaseScore *float32 `json:"baseScore"`
+}
+
 // specifies information about (at least one) score of the vulnerability and for
 // which products the given value applies.
 type CsafJsonVulnerabilitiesElemScoresElem struct {
 	// CvssV2 corresponds to the JSON schema field "cvss_v2".
-	CvssV2 interface{} `json:"cvss_v2,omitempty"`
+	CvssV2 CVSSScoreTemp `json:"cvss_v2,omitempty"`
 
 	// CvssV3 corresponds to the JSON schema field "cvss_v3".
-	CvssV3 interface{} `json:"cvss_v3,omitempty"`
+	CvssV3 CVSSScoreTemp `json:"cvss_v3,omitempty"`
 
 	// Products corresponds to the JSON schema field "products".
 	Products interface{} `json:"products"`

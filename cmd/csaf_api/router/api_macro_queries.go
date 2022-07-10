@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -34,12 +35,76 @@ func GetByCVE(w http.ResponseWriter, r *http.Request) {
 	localCollection := *allDocuments // shallow copy of allDocuments
 	tlpPerms := getContextVars(r)
 	addTLPFilter(&localCollection, tlpPerms)
+	if err := addRegularilyUsedFilters(&localCollection, r); err != nil {
+		reportError(&w, 400, "BAD_REQUEST", err.Error())
+		localCollection.ClearFilterFuncs()
+		return
+	}
+
+	query := r.URL.Query()
+	cvssv3Param := query.Get("cvssv3")
+	cvssv3ParamSplit := strings.Split(cvssv3Param, ",")
+	cvssv2Param := query.Get("cvssv2")
+	cvssv2ParamSplit := strings.Split(cvssv2Param, ",")
 
 	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
+		// This filter function is fairly long, as it tries to match CVE-CVSS
+		// pairs with are double-nested arrays. Additionaly, a CVSS can be
+		// defined twice (v2, v3) and with arithmentic expressions.
+		//
+		// Performance-wise, this should not be a big problem, as most of the
+		// inner loops terminate before finishing full iteration very early.
 		for _, vuln := range doc.Vulnerabilities {
 			if vuln.Cve != nil && *vuln.Cve == cve {
+				// cve matched
+				if cvssv3Param != "" || cvssv2Param != "" {
+					// any of the params was set
+					if len(vuln.Scores) == 0 {
+						// scores property does not exist, checking not possible
+						// do not add the document
+						return false, nil
+					}
+					for _, score := range vuln.Scores {
+						if cvssv3Param != "" {
+							str := fmt.Sprintf("%f", *score.CvssV3.BaseScore)
+							match, err := matchCVSSScore(str, cvssv3ParamSplit...)
+							if err != nil {
+								// on error, stop and report
+								return false, err
+							}
+							if match {
+								// cvssv3 matched
+								// add document
+								return true, nil
+							}
+						}
+						if cvssv2Param != "" {
+							str := fmt.Sprintf("%f", *score.CvssV2.BaseScore)
+							match, err := matchCVSSScore(str, cvssv2ParamSplit...)
+							if err != nil {
+								// on error, stop and report
+								return false, err
+							}
+							if match {
+								// cvssv2 matched
+								// add document
+								return true, nil
+							}
+						}
+					}
+					// no specified cvss score matched any document containing
+					// the matched cve (otherwise the for-loop would have returned
+					// until now)
+					// do not add document
+					return false, nil
+				}
+				// no cvss parameter specified, cve matched
+				// add document
 				return true, nil
 			}
+			// cve did not match
+			// try next vuln object
+			continue
 		}
 		return false, nil
 	})
