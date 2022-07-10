@@ -33,6 +33,16 @@ func NewAPI(role string, auth []config.AuthData, docs *csaf.CSAFDocumentCollecti
 	docBasePath = docBase
 
 	router := mux.NewRouter().UseEncodedPath()
+	// By default, mux unescapes the whole path
+	// BEFORE matching it with a route.
+	//
+	// We need to use encoded path matchers instead
+	// as urls are often used as path parameters.
+	// The "https://" scheme would break the path
+	// matching otherwise.
+	//
+	// This requires manual url-unescaping of path
+	// parameters in the routes!
 
 	v1Router := router.PathPrefix("/.well-known/csaf/api/v1/").Subrouter()
 	v1Router.Use(loggingMiddleware)

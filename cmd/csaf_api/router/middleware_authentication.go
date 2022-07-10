@@ -40,5 +40,11 @@ func authMiddleware(next http.Handler) http.Handler {
 		ctxWithPermissions := context.WithValue(r.Context(), permissionKey, permissions)
 		rWithPermissions := r.WithContext(ctxWithPermissions)
 		next.ServeHTTP(w, rWithPermissions)
+
+		// IDEA instead of passing the tlp labels down with context, load allDocuments here
+		// and add the tlp filter. As all routes use the same instance of CSAFDocumentCollection
+		// the filter will persist until an error occures or a route sent a request successfully.
+		//
+		// This needs some refactoring.
 	})
 }

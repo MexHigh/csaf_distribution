@@ -157,7 +157,7 @@ type CsafJsonDocumentDistributionTlp struct {
 // Provides information about the publisher of the document.
 type CsafJsonDocumentPublisher struct {
 	// Provides information about the category of publisher releasing the document.
-	Category CsafJsonDocumentPublisherCategory `json:"category"`
+	Category PublisherCategory `json:"category"`
 
 	// Information on how to contact the publisher, possibly including details such as
 	// web sites, email addresses, phone numbers, and postal mail addresses.
@@ -176,14 +176,14 @@ type CsafJsonDocumentPublisher struct {
 	Namespace string `json:"namespace"`
 }
 
-type CsafJsonDocumentPublisherCategory string
+type PublisherCategory string
 
-const CsafJsonDocumentPublisherCategoryCoordinator CsafJsonDocumentPublisherCategory = "coordinator"
-const CsafJsonDocumentPublisherCategoryDiscoverer CsafJsonDocumentPublisherCategory = "discoverer"
-const CsafJsonDocumentPublisherCategoryOther CsafJsonDocumentPublisherCategory = "other"
-const CsafJsonDocumentPublisherCategoryTranslator CsafJsonDocumentPublisherCategory = "translator"
-const CsafJsonDocumentPublisherCategoryUser CsafJsonDocumentPublisherCategory = "user"
-const CsafJsonDocumentPublisherCategoryVendor CsafJsonDocumentPublisherCategory = "vendor"
+const PublisherCategoryCoordinator PublisherCategory = "coordinator"
+const PublisherCategoryDiscoverer PublisherCategory = "discoverer"
+const PublisherCategoryOther PublisherCategory = "other"
+const PublisherCategoryTranslator PublisherCategory = "translator"
+const PublisherCategoryUser PublisherCategory = "user"
+const PublisherCategoryVendor PublisherCategory = "vendor"
 
 // Is a container designated to hold all management attributes necessary to track a
 // CSAF document as a whole.
@@ -630,7 +630,7 @@ func (j *CsafJsonVulnerabilitiesElemInvolvementsElemParty) UnmarshalJSON(b []byt
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
-func (j *CsafJsonDocumentPublisherCategory) UnmarshalJSON(b []byte) error {
+func (j *PublisherCategory) UnmarshalJSON(b []byte) error {
 	var v string
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
@@ -645,7 +645,7 @@ func (j *CsafJsonDocumentPublisherCategory) UnmarshalJSON(b []byte) error {
 	if !ok {
 		return fmt.Errorf("invalid value (expected one of %#v): %#v", enumValues_CsafJsonDocumentPublisherCategory, v)
 	}
-	*j = CsafJsonDocumentPublisherCategory(v)
+	*j = PublisherCategory(v)
 	return nil
 }
 
