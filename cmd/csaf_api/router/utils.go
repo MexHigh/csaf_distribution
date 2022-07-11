@@ -5,12 +5,57 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 	"regexp"
 	"strings"
 
 	"github.com/PaesslerAG/gval"
 	"github.com/csaf-poc/csaf_distribution/csaf"
 )
+
+func structToJSONInterface(s interface{}) (interface{}, error) {
+	data, err := json.Marshal(s)
+	if err != nil {
+		return nil, err
+	}
+	var dataIf interface{}
+	err = json.Unmarshal(data, &dataIf)
+	if err != nil {
+		return nil, err
+	}
+	return dataIf, nil
+}
+
+func isJSONType(v interface{}, t string) bool {
+	if v == nil {
+		return false
+	}
+	switch t {
+	case "string":
+		if reflect.TypeOf(v).String() == "string" {
+			return true
+		}
+	case "number":
+		if reflect.TypeOf(v).String() == "float64" {
+			return true
+		}
+	case "object":
+		if reflect.TypeOf(v).String() == "map[string]interface {}" {
+			return true
+		}
+	case "array":
+		if reflect.TypeOf(v).String() == "[]interface {}" {
+			return true
+		}
+	case "boolean":
+		if reflect.TypeOf(v).String() == "bool" {
+			return true
+		}
+	default:
+		return false
+	}
+	return false
+}
 
 // getContextVars is a helper function that extracts
 // all context variables set by middleware. Currently,
@@ -147,7 +192,7 @@ func reportSuccess(w *http.ResponseWriter, documents []csaf.CSAFDocumentWrapper,
 		obj.Documents = append(obj.Documents, toAdd)
 	}
 
-	v, err := json.MarshalIndent(obj, "", "    ")
+	v, err := json.Marshal(obj)
 	if err != nil {
 		reportError(w, 500, "SERVER_ERROR", err.Error())
 		return

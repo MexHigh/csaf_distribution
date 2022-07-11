@@ -10,11 +10,88 @@ package router
 
 import (
 	"net/http"
+	"reflect"
+
+	"github.com/csaf-poc/csaf_distribution/csaf"
+	"github.com/csaf-poc/csaf_distribution/util"
 )
 
 func GetDocumentByJSONMatch(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	query := r.URL.Query()
+	pathParam := query.Get("path")
+	if pathParam == "" {
+		reportError(&w, 400, "BAD_REQUEST", "missing required parameter 'path'")
+		return
+	}
+	typeParam := query.Get("type")
+	valueParam := query.Get("value")
+	if typeParam == "" && valueParam == "" {
+		reportError(&w, 400, "BAD_REQUEST", "at least one of 'type' and 'value' is required")
+		return
+	}
+	includeMissingParam := query.Has("include_missing")
+
+	localCollection := *allDocuments // shallow copy of allDocuments
+	tlpPerms := getContextVars(r)
+	addTLPFilter(&localCollection, tlpPerms)
+	if err := addRegularilyUsedFilters(&localCollection, r); err != nil {
+		reportError(&w, 400, "BAD_REQUEST", err.Error())
+		localCollection.ClearFilterFuncs()
+		return
+	}
+
+	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
+		data, err := structToJSONInterface(*doc)
+		if err != nil {
+			return false, err
+		}
+		evaluated, err := util.NewPathEval().Eval(pathParam, data)
+		if err != nil {
+			if includeMissingParam {
+				return true, nil
+			}
+			return false, err
+		}
+
+		if typeParam != "" && valueParam == "" {
+			// only type param set
+			if isJSONType(evaluated, typeParam) {
+				return true, nil
+			}
+			return false, nil
+		} else if typeParam != "" && valueParam != "" {
+			// both parameters set
+			if isJSONType(evaluated, typeParam) {
+				if reflect.ValueOf(evaluated).String() == valueParam {
+					return true, nil
+				} else {
+					// value does not match, but type does
+					return false, nil
+				}
+			} else {
+				// type does not match
+				return false, nil
+			}
+		} else if typeParam == "" && valueParam != "" {
+			// only value param set
+			if reflect.DeepEqual(evaluated, valueParam) {
+				return true, nil
+			}
+			return false, nil
+		}
+
+		return false, nil
+	})
+
+	filtered, err := localCollection.StartFiltering(true)
+	if err != nil {
+		reportError(&w, 400, "BAD_REQUEST", err.Error())
+		localCollection.ClearFilterFuncs()
+		return
+	}
+
+	withHashes, withSignatures := getWithParameters(r)
+	reportSuccess(&w, filtered, withHashes, withSignatures)
 }
 
 func GetDocumentByJSONMatches(w http.ResponseWriter, r *http.Request) {
