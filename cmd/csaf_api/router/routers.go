@@ -45,6 +45,13 @@ func NewAPI(role string, auth []config.AuthData, docs *csaf.CSAFDocumentCollecti
 	// parameters in the routes!
 
 	v1Router := router.PathPrefix("/.well-known/csaf/api/v1/").Subrouter()
+	// overwrite default handlers to respond with JSON
+	v1Router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reportError(&w, 404, "NOT_FOUND", "route not found")
+	})
+	v1Router.MethodNotAllowedHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reportError(&w, 405, "METHOD_NOT_ALLOWED", "method not allowed")
+	})
 	v1Router.Use(loggingMiddleware)
 
 	// Meta routes

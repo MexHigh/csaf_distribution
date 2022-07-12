@@ -12,6 +12,17 @@ import (
 	"net/http"
 )
 
+type Device struct {
+	Cpe           string `json:"cpe,omitempty"`
+	Hashes        string `json:"hashes,omitempty"`
+	ModelNumbers  string `json:"model_numbers,omitempty"`
+	Purl          string `json:"purl,omitempty"`
+	SbomUrls      string `json:"sbom_urls,omitempty"`
+	SerialNumbers string `json:"serial_numbers,omitempty"`
+	Skus          string `json:"skus,omitempty"`
+	XGenericUris  string `json:"x_generic_uris,omitempty"`
+}
+
 func GetDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)

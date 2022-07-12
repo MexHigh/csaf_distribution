@@ -10,14 +10,38 @@ package router
 
 type AdvancedMatchingMatches struct {
 	Path           string       `json:"path"`
-	Type           string       `json:"type,omitempty"`
+	Type           string       `json:"type,omitempty"` // default: irrelevant
 	Value          *interface{} `json:"value"`
-	Matching       string       `json:"matching,omitempty"`
-	IncludeMissing bool         `json:"include_missing,omitempty"`
+	Matching       string       `json:"matching,omitempty"`        // default: matching_default
+	IncludeMissing bool         `json:"include_missing,omitempty"` // default: false (implicit)
 }
 
 type AdvancedMatching struct {
-	MatchingDefault string                    `json:"matching_default,omitempty"`
-	Operator        string                    `json:"operator,omitempty"`
-	Matches         []AdvancedMatchingMatches `json:"matches"`
+	MatchingDefault string                     `json:"matching_default,omitempty"` // default: exact
+	Operator        string                     `json:"operator,omitempty"`         // (and|or) default: and
+	Matches         []*AdvancedMatchingMatches `json:"matches"`
+}
+
+// Provision sets the default values, if not set
+func (am *AdvancedMatching) Provision() {
+	if am.Operator == "" {
+		am.Operator = "and"
+	}
+	if am.MatchingDefault == "" {
+		am.MatchingDefault = "exact"
+	}
+	// iterate over matches to set matching
+	for _, match := range am.Matches {
+		if match.Matching == "" {
+			match.Matching = am.MatchingDefault
+		}
+	}
+}
+
+// Check checks if all values are set correctly
+// after provision (e.g. if operator is either
+// "and" or "or")
+func (am *AdvancedMatching) Check() error {
+	// TODO
+	return nil
 }

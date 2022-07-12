@@ -18,7 +18,7 @@ import (
 	"github.com/csaf-poc/csaf_distribution/csaf"
 )
 
-type metadataResponse struct {
+type MetadataResponse struct {
 	Error            *ModelError  `json:"error"`
 	ProviderMetadata *interface{} `json:"provider_metadata,omitempty"` // See https://docs.oasis-open.org/csaf/csaf/v2.0/provider_json_schema.json
 	Aggregator       *interface{} `json:"aggregator,omitempty"`        // See https://docs.oasis-open.org/csaf/csaf/v2.0/aggregator_json_schema.json
@@ -38,7 +38,7 @@ func GetMetadata(w http.ResponseWriter, r *http.Request) {
 		fullPath = path.Join(docBasePath, "html/.well-known/csaf/provider-metadata.json")
 		provider = true
 	default:
-		res := metadataResponse{
+		res := MetadataResponse{
 			Error: &ModelError{
 				Errcode: "SERVER_ERROR",
 				Errmsg:  "Unable to determine server role. Check /role endpoint.",
@@ -85,7 +85,7 @@ func GetMetadata(w http.ResponseWriter, r *http.Request) {
 		panic(varErrors) // TODO
 	}
 
-	res := metadataResponse{}
+	res := MetadataResponse{}
 	if provider {
 		res.ProviderMetadata = &doc
 	} else {
@@ -102,13 +102,13 @@ func GetMetadata(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-type roleResponse struct {
+type RoleResponse struct {
 	Error *ModelError `json:"error"`
 	Role  string      `json:"role,omitempty"`
 }
 
 func GetRole(w http.ResponseWriter, r *http.Request) {
-	res := roleResponse{}
+	res := RoleResponse{}
 	var status int
 
 	if csafRole == "" {
