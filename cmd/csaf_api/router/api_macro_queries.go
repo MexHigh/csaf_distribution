@@ -180,7 +180,7 @@ func GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	}
 
 	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
-		m, err := matchByMatchingParameter(doc.Document.Publisher.Name, publisherName, r)
+		m, err := matchByMatching(doc.Document.Publisher.Name, publisherName, r.URL.Query().Get("matching"))
 		//fmt.Printf("Matching '%s' with '%s': %v\n", publisherName, doc.Document.Publisher.Name, m)
 		return m, err
 	})
@@ -234,7 +234,7 @@ func GetByTitle(w http.ResponseWriter, r *http.Request) {
 	}
 
 	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
-		return matchByMatchingParameter(doc.Document.Title, title, r)
+		return matchByMatching(doc.Document.Title, title, r.URL.Query().Get("matching"))
 	})
 
 	filtered, err := localCollection.StartFiltering(true)

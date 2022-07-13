@@ -127,9 +127,37 @@ func matchCVSSScore(score string, expressions ...string) (bool, error) {
 //
 // Possible values are "exact", "regex", "begins-with", "ends-with" and "contains".
 // If other values are set, an error is returned.
+//
+// Deprecated: use matchByMatching instead
 func matchByMatchingParameter(searchString, toMatchString string, r *http.Request) (bool, error) {
 	query := r.URL.Query()
 	matching := query.Get("matching")
+	if matching == "" {
+		// if not set, matching is exact
+		return searchString == toMatchString, nil
+	}
+
+	switch matching {
+	case "exact":
+		return searchString == toMatchString, nil
+	case "regex":
+		return regexp.MatchString(toMatchString, searchString)
+	case "begins-with":
+		return strings.HasPrefix(searchString, toMatchString), nil
+	case "ends-with":
+		return strings.HasSuffix(searchString, toMatchString), nil
+	case "contains":
+		return strings.Contains(searchString, toMatchString), nil
+	default:
+		return false, fmt.Errorf("matching parameter value %s is unknown", matching)
+	}
+}
+
+// matchByMatching works exactly like matchByMatchingParameter, but instead of
+// passing it a http.Request object, it takes the matching string directly.
+// This can be useful when the matching parameter is not included in the URL
+// query but in the request body, for example.
+func matchByMatching(searchString, toMatchString, matching string) (bool, error) {
 	if matching == "" {
 		// if not set, matching is exact
 		return searchString == toMatchString, nil
