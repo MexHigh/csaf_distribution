@@ -110,8 +110,8 @@ func GetDocumentByJSONMatches(w http.ResponseWriter, r *http.Request) {
 
 	requestBody.Provision()
 	if err := requestBody.Check(); err != nil {
-		// TODO Check is not implemented yet (always returns nil)
 		reportError(&w, 400, "BAD_REQUEST", err.Error())
+		return
 	}
 
 	localCollection := *allDocuments // shallow copy of allDocuments

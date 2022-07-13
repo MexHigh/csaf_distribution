@@ -8,6 +8,10 @@
  */
 package router
 
+import (
+	"fmt"
+)
+
 type Match struct {
 	Path           string       `json:"path"`
 	Type           string       `json:"type,omitempty"` // default: irrelevant
@@ -42,6 +46,28 @@ func (am *AdvancedMatching) Provision() {
 // after provision (e.g. if operator is either
 // "and" or "or")
 func (am *AdvancedMatching) Check() error {
-	// TODO
+	// check matching_default
+	switch am.MatchingDefault {
+	case "exact", "regex", "begins-with", "ends-with", "contains":
+	default:
+		return fmt.Errorf("matching_default is not (exact|regex|begins-with|ends-with|contains)")
+	}
+
+	// check operator
+	switch am.Operator {
+	case "and", "or":
+	default:
+		return fmt.Errorf("operator is not (and|or)")
+	}
+
+	// check all matching fields in matches
+	for i, match := range am.Matches {
+		switch match.Matching {
+		case "exact", "regex", "begins-with", "ends-with", "contains":
+		default:
+			return fmt.Errorf("matching in match object %d is not (exact|regex|begins-with|ends-with|contains)", i)
+		}
+	}
+
 	return nil
 }
