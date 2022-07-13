@@ -8,7 +8,7 @@
  */
 package router
 
-type AdvancedMatchingMatches struct {
+type Match struct {
 	Path           string       `json:"path"`
 	Type           string       `json:"type,omitempty"` // default: irrelevant
 	Value          *interface{} `json:"value"`
@@ -17,9 +17,9 @@ type AdvancedMatchingMatches struct {
 }
 
 type AdvancedMatching struct {
-	MatchingDefault string                     `json:"matching_default,omitempty"` // default: exact
-	Operator        string                     `json:"operator,omitempty"`         // (and|or) default: and
-	Matches         []*AdvancedMatchingMatches `json:"matches"`
+	MatchingDefault string   `json:"matching_default,omitempty"` // default: exact
+	Operator        string   `json:"operator,omitempty"`         // (and|or) default: and
+	Matches         []*Match `json:"matches"`
 }
 
 // Provision sets the default values, if not set

@@ -9,6 +9,8 @@
 package router
 
 import (
+	"encoding/json"
+	"errors"
 	"net/http"
 	"reflect"
 
@@ -41,12 +43,16 @@ func GetDocumentByJSONMatch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
-		data, err := structToJSONInterface(*doc)
+		rawDoc, err := structToJSONInterface(*doc)
 		if err != nil {
 			return false, err
 		}
-		evaluated, err := util.NewPathEval().Eval(pathParam, data)
+		evaluated, err := util.NewPathEval().Eval(pathParam, rawDoc)
 		if err != nil {
+			// err != nil if the JSONPath was not found or
+			// is otherwise syntactically incorrect
+			// TODO maybe differentiate and throw an error
+			// if the syntax is not correct?
 			if includeMissingParam {
 				return true, nil
 			}
@@ -62,7 +68,7 @@ func GetDocumentByJSONMatch(w http.ResponseWriter, r *http.Request) {
 		} else if typeParam != "" && valueParam != "" {
 			// both parameters set
 			if isJSONType(evaluated, typeParam) {
-				if reflect.ValueOf(evaluated).String() == valueParam {
+				if reflect.DeepEqual(evaluated, valueParam) { // TODO implement matching param
 					return true, nil
 				} else {
 					// value does not match, but type does
@@ -74,12 +80,12 @@ func GetDocumentByJSONMatch(w http.ResponseWriter, r *http.Request) {
 			}
 		} else if typeParam == "" && valueParam != "" {
 			// only value param set
-			if reflect.DeepEqual(evaluated, valueParam) {
+			if reflect.DeepEqual(evaluated, valueParam) { // TODO implement matching param
 				return true, nil
 			}
 			return false, nil
 		}
-
+		// wrong parameters, but this was already handled before
 		return false, nil
 	})
 
@@ -95,6 +101,96 @@ func GetDocumentByJSONMatch(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetDocumentByJSONMatches(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+	// read request body
+	var requestBody AdvancedMatching
+	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		reportError(&w, 400, "BAD_REQUEST", err.Error())
+		return
+	}
+
+	requestBody.Provision()
+	if err := requestBody.Check(); err != nil {
+		// TODO Check is not implemented yet (always returns nil)
+		reportError(&w, 400, "BAD_REQUEST", err.Error())
+	}
+
+	localCollection := *allDocuments // shallow copy of allDocuments
+	tlpPerms := getContextVars(r)
+	addTLPFilter(&localCollection, tlpPerms)
+	/*if err := addRegularilyUsedFilters(&localCollection, r); err != nil {
+		reportError(&w, 400, "BAD_REQUEST", err.Error())
+		localCollection.ClearFilterFuncs()
+		return
+	}*/ // they are not needed in this route
+
+	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
+		rawDoc, err := structToJSONInterface(*doc)
+		if err != nil {
+			return false, err
+		}
+
+		matches := 0
+		for _, match := range requestBody.Matches {
+			evaluated, err := util.NewPathEval().Eval(match.Path, rawDoc)
+			if err != nil {
+				// TODO same optimizations apply as mentioned in the
+				// implementation in the GetDocumentByJSONMatch handler
+				if match.IncludeMissing {
+					matches += 1
+				}
+				continue
+			}
+			if match.Type != "" && match.Value == nil {
+				// only type param set
+				if isJSONType(evaluated, match.Type) {
+					matches += 1
+				}
+				continue
+			} else if match.Type != "" && match.Value != nil {
+				// both parameters set
+				if isJSONType(evaluated, match.Type) {
+					if reflect.DeepEqual(evaluated, *match.Value) { // TODO implement matching param
+						matches += 1
+					} else {
+						// value does not match, but type does
+						continue
+					}
+				} else {
+					// type does not match
+					continue
+				}
+			} else if match.Type == "" && match.Value != nil {
+				// only value param set
+				if reflect.DeepEqual(evaluated, *match.Value) { // TODO implement matching param
+					matches += 1
+				}
+				continue
+			}
+		}
+
+		switch requestBody.Operator {
+		case "and":
+			if matches == len(requestBody.Matches) {
+				return true, nil
+			}
+			return false, nil
+		case "or":
+			if matches > 0 {
+				return true, nil
+			}
+			return false, nil
+		default:
+			return false, errors.New("matching_operator misconfigured")
+		}
+	})
+
+	filtered, err := localCollection.StartFiltering(true)
+	if err != nil {
+		reportError(&w, 400, "BAD_REQUEST", err.Error())
+		localCollection.ClearFilterFuncs()
+		return
+	}
+
+	withHashes, withSignatures := getWithParameters(r)
+	reportSuccess(&w, filtered, withHashes, withSignatures)
 }
