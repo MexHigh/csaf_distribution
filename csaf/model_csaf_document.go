@@ -23,9 +23,11 @@ type AcknowledgmentsT []struct {
 }
 
 // Contains branch elements as children of the current element.
-type BranchesT []struct {
+type BranchesT []Branch
+
+type Branch struct {
 	// Branches corresponds to the JSON schema field "branches".
-	Branches BranchesT `json:"branches,omitempty"`
+	Branches *BranchesT `json:"branches,omitempty"`
 
 	// Describes the characteristics of the labeled branch.
 	Category BranchesTElemCategory `json:"category"`
@@ -1197,35 +1199,35 @@ const CsafJsonVulnerabilitiesElemInvolvementsElemStatusOpen CsafJsonVulnerabilit
 type CsafJsonVulnerabilitiesElemProductStatus struct {
 	// These are the first versions of the releases known to be affected by the
 	// vulnerability.
-	FirstAffected ProductsT `json:"first_affected,omitempty"`
+	FirstAffected *ProductsT `json:"first_affected,omitempty"`
 
 	// These versions contain the first fix for the vulnerability but may not be the
 	// recommended fixed versions.
-	FirstFixed ProductsT `json:"first_fixed,omitempty"`
+	FirstFixed *ProductsT `json:"first_fixed,omitempty"`
 
 	// These versions contain a fix for the vulnerability but may not be the
 	// recommended fixed versions.
-	Fixed ProductsT `json:"fixed,omitempty"`
+	Fixed *ProductsT `json:"fixed,omitempty"`
 
 	// These versions are known to be affected by the vulnerability.
-	KnownAffected ProductsT `json:"known_affected,omitempty"`
+	KnownAffected *ProductsT `json:"known_affected,omitempty"`
 
 	// These versions are known not to be affected by the vulnerability.
-	KnownNotAffected ProductsT `json:"known_not_affected,omitempty"`
+	KnownNotAffected *ProductsT `json:"known_not_affected,omitempty"`
 
 	// These are the last versions in a release train known to be affected by the
 	// vulnerability. Subsequently released versions would contain a fix for the
 	// vulnerability.
-	LastAffected ProductsT `json:"last_affected,omitempty"`
+	LastAffected *ProductsT `json:"last_affected,omitempty"`
 
 	// These versions have a fix for the vulnerability and are the vendor-recommended
 	// versions for fixing the vulnerability.
-	Recommended ProductsT `json:"recommended,omitempty"`
+	Recommended *ProductsT `json:"recommended,omitempty"`
 
 	// It is not known yet whether these versions are or are not affected by the
 	// vulnerability. However, it is still under investigation - the result will be
 	// provided in a later release of the document.
-	UnderInvestigation ProductsT `json:"under_investigation,omitempty"`
+	UnderInvestigation *ProductsT `json:"under_investigation,omitempty"`
 }
 
 // Specifies details on how to handle (and presumably, fix) a vulnerability.

@@ -179,6 +179,120 @@ func matchByMatching(searchString, toMatchString, matching string) (bool, error)
 	}
 }
 
+// findAllProductObjects seaches for all FullProductNameT objects
+// inside the /product_tree property
+func findAllProductObjects(doc *csaf.CsafJson) []csaf.FullProductNameT {
+	products := make([]csaf.FullProductNameT, 0)
+
+	// read from /propduct_tree/full_product_trees
+	products = append(products, doc.ProductTree.FullProductNames...)
+
+	// read from /product_tree/relationships
+	for _, rel := range doc.ProductTree.Relationships {
+		products = append(products, rel.FullProductName)
+	}
+
+	// read from /product_tree/branches
+	for _, entryBranch := range doc.ProductTree.Branches {
+		products = append(products, recurseBranches(&entryBranch)...)
+	}
+
+	// No need to read from /product_tree/product_groups
+	// as they do not yield product_ids
+
+	return products
+}
+
+// recurseBranches recursively finds all FullProductNameT objects in a
+// branch
+func recurseBranches(currentBranch *csaf.Branch) []csaf.FullProductNameT {
+	if currentBranch.Branches == nil {
+		return []csaf.FullProductNameT{currentBranch.Product}
+	}
+	branches := make([]csaf.FullProductNameT, 0)
+	for _, branch := range *currentBranch.Branches {
+		branches = append(branches, recurseBranches(&branch)...)
+	}
+	return branches
+}
+
+func findVulnObjectsWithProduct(doc *csaf.CsafJson, fpnt csaf.FullProductNameT) []csaf.CsafJsonVulnerabilitiesElem {
+	result := make([]csaf.CsafJsonVulnerabilitiesElem, 0)
+	for _, vulnObj := range doc.Vulnerabilities {
+		// first_affected
+		if vulnObj.ProductStatus.FirstAffected != nil {
+			for _, fa := range *vulnObj.ProductStatus.FirstAffected {
+				if fa == fpnt.ProductId {
+					result = append(result, vulnObj)
+				}
+			}
+		}
+		// first_fixed
+		if vulnObj.ProductStatus.FirstFixed != nil {
+			for _, fa := range *vulnObj.ProductStatus.FirstFixed {
+				if fa == fpnt.ProductId {
+					result = append(result, vulnObj)
+				}
+			}
+		}
+		// fixed
+		if vulnObj.ProductStatus.Fixed != nil {
+			for _, fa := range *vulnObj.ProductStatus.Fixed {
+				if fa == fpnt.ProductId {
+					result = append(result, vulnObj)
+				}
+			}
+		}
+		// known_affected
+		if vulnObj.ProductStatus.KnownAffected != nil {
+			for _, fa := range *vulnObj.ProductStatus.KnownAffected {
+				if fa == fpnt.ProductId {
+					result = append(result, vulnObj)
+				}
+			}
+		}
+		// known_not_affected
+		if vulnObj.ProductStatus.KnownNotAffected != nil {
+			for _, fa := range *vulnObj.ProductStatus.KnownNotAffected {
+				if fa == fpnt.ProductId {
+					result = append(result, vulnObj)
+				}
+			}
+		}
+		// last_affected
+		if vulnObj.ProductStatus.LastAffected != nil {
+			for _, fa := range *vulnObj.ProductStatus.LastAffected {
+				if fa == fpnt.ProductId {
+					result = append(result, vulnObj)
+				}
+			}
+		}
+		// recommended
+		if vulnObj.ProductStatus.Recommended != nil {
+			for _, fa := range *vulnObj.ProductStatus.Recommended {
+				if fa == fpnt.ProductId {
+					result = append(result, vulnObj)
+				}
+			}
+		}
+		// under_investigation
+		if vulnObj.ProductStatus.UnderInvestigation != nil {
+			for _, fa := range *vulnObj.ProductStatus.UnderInvestigation {
+				if fa == fpnt.ProductId {
+					result = append(result, vulnObj)
+				}
+			}
+		}
+	}
+	return result
+}
+
+// anyIdentificationHelperMatches tries to compare two Device instances
+// on every property
+func anyIdentificationHelperMatches(refDevice, toMatchDevice Device) bool {
+	return true
+}
+
 func reportError(w *http.ResponseWriter, statusCode int, errcode, errmsg string) {
 	obj := GenericResponse{
 		Error: &ModelError{
