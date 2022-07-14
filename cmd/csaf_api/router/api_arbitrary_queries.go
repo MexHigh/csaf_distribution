@@ -59,35 +59,6 @@ func GetDocumentByJSONMatch(w http.ResponseWriter, r *http.Request) {
 			return false, err
 		}
 
-		/*if typeParam != "" && valueParam == "" {
-			// only type param set
-			if isJSONType(evaluated, typeParam) {
-				return true, nil
-			}
-			return false, nil
-		} else if typeParam != "" && valueParam != "" {
-			// both parameters set
-			if isJSONType(evaluated, typeParam) {
-				if reflect.DeepEqual(evaluated, valueParam) { // TODO implement matching param
-					return true, nil
-				} else {
-					// value does not match, but type does
-					return false, nil
-				}
-			} else {
-				// type does not match
-				return false, nil
-			}
-		} else if typeParam == "" && valueParam != "" {
-			// only value param set
-			if reflect.DeepEqual(evaluated, valueParam) { // TODO implement matching param
-				return true, nil
-			}
-			return false, nil
-		}
-		// wrong parameters, but this was already handled before
-		return false, nil*/
-
 		if typeParam != "" && valueParam == "" {
 			// only type param set
 			if isJSONType(evaluated, typeParam) {

@@ -46,8 +46,8 @@ func (dc *CSAFDocumentCollection) ClearFilterFuncs() {
 }
 
 // StartFiltering executes all filter functions registered by
-// AddFilterFunc() and applies the result directly to the collection.
-// Afterwards, the registered filter functions are deleted.
+// AddFilterFunc() and returns the result. Afterwards, the
+// registered filter functions are deleted.
 func (dc *CSAFDocumentCollection) StartFiltering(verbose bool) ([]CSAFDocumentWrapper, error) {
 	filteredDocuments := make([]CSAFDocumentWrapper, 0)
 
