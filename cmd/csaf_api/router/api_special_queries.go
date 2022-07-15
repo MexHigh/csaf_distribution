@@ -30,11 +30,11 @@ func GetDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
 	localCollection := *allDocuments // shallow copy of allDocuments
 	tlpPerms := getContextVars(r)
 	addTLPFilter(&localCollection, tlpPerms)
-	/*if err := addRegularilyUsedFilters(&localCollection, r); err != nil {
+	if err := addRegularilyUsedFilters(&localCollection, r); err != nil {
 		reportError(&w, 400, "BAD_REQUEST", err.Error())
 		localCollection.ClearFilterFuncs()
 		return
-	}*/ // they are not needed in this route
+	}
 
 	query := r.URL.Query()
 	productStatusParam := query.Get("product_status")
@@ -42,6 +42,7 @@ func GetDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
 	cvssv3ParamSplit := strings.Split(cvssv3Param, ",")
 	cvssv2Param := query.Get("cvssv2")
 	cvssv2ParamSplit := strings.Split(cvssv2Param, ",")
+	remediationCategoryParam := query.Get("remediation_category")
 
 	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
 		products := findAllProductObjects(doc)
@@ -136,12 +137,16 @@ func GetDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 
-				// TODO remediation categories
+				// check for remediation_category parameter
+				if remediationCategoryParam != "" {
+					if !atLeastOneRemediationExists(&vulnObj, remediationCategoryParam) {
+						vulnObjectMatches = false
+					}
+				}
 
 				if !vulnObjectMatches {
 					keysToRemove = append(keysToRemove, key)
 				}
-				// END
 			}
 
 			// delete the keys
