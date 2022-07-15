@@ -35,14 +35,21 @@ func GetDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
 		return
 	}*/ // they are not needed in this route
 
+	query := r.URL.Query()
+	productStatusParam := query.Get("product_status")
+
 	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
 		products := findAllProductObjects(doc)
 		for _, product := range products {
+			if product.ProductIdentificationHelper == nil {
+				// no product identification helper --> skip
+				continue
+			}
 			// match the product with one of the searched products
 			// in the request body
 			matched := false
 			for _, searchedProduct := range deviceListRequestBody {
-				if anyIdentificationHelperMatches( // TODO implement
+				if anyIdentificationHelperMatches(
 					Device(*product.ProductIdentificationHelper),
 					searchedProduct,
 				) {
@@ -54,7 +61,16 @@ func GetDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			vulnObjects := findVulnObjectsWithProduct(doc, product)
+			// implements product_status
+			var vulnObjects []csaf.CsafJsonVulnerabilitiesElem
+			if productStatusParam == "" {
+				// not set
+				vulnObjects = findVulnObjectsWithProduct(doc, product)
+			} else {
+				// set
+				vulnObjects = findVulnObjectsWithProduct(doc, product, productStatusParam)
+			}
+
 			// convert []csaf.CsafJsonVulnerabilitiesElem to map[int]csaf.CsafJsonVulnerabilitiesElem
 			// for easier deletion of items
 			vulnObjectsMap := make(map[int]csaf.CsafJsonVulnerabilitiesElem, 0)
@@ -64,7 +80,7 @@ func GetDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
 
 			keysToRemove := make([]int, 0)
 			for key, vulnObj := range vulnObjectsMap {
-				// TODO
+				// TODO implement filter params
 				fmt.Println(key, vulnObj)
 			}
 

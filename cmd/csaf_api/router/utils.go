@@ -216,70 +216,103 @@ func recurseBranches(currentBranch *csaf.Branch) []csaf.FullProductNameT {
 	return branches
 }
 
-func findVulnObjectsWithProduct(doc *csaf.CsafJson, fpnt csaf.FullProductNameT) []csaf.CsafJsonVulnerabilitiesElem {
+// findVulnObjectsWithProduct returns all vuln objectes that contain the product specified.
+// Additionaly, you can specify productStatus, for with of them to filter. If no productStatus
+// is specified, all productStatuses are conducted.
+func findVulnObjectsWithProduct(doc *csaf.CsafJson, fpnt csaf.FullProductNameT, productStatus ...string) []csaf.CsafJsonVulnerabilitiesElem {
+	if len(productStatus) == 0 {
+		productStatus = []string{
+			"first_affected",
+			"first_fixed",
+			"fixed",
+			"known_affected",
+			"known_not_affected",
+			"last_affected",
+			"recommended",
+			"under_investigation",
+		}
+	}
+
 	result := make([]csaf.CsafJsonVulnerabilitiesElem, 0)
+
 	for _, vulnObj := range doc.Vulnerabilities {
 		// first_affected
-		if vulnObj.ProductStatus.FirstAffected != nil {
-			for _, fa := range *vulnObj.ProductStatus.FirstAffected {
-				if fa == fpnt.ProductId {
-					result = append(result, vulnObj)
+		if c, _ := stringSliceContains(productStatus, "first_affected"); c {
+			if vulnObj.ProductStatus.FirstAffected != nil {
+				for _, fa := range *vulnObj.ProductStatus.FirstAffected {
+					if fa == fpnt.ProductId {
+						result = append(result, vulnObj)
+					}
 				}
 			}
 		}
 		// first_fixed
-		if vulnObj.ProductStatus.FirstFixed != nil {
-			for _, fa := range *vulnObj.ProductStatus.FirstFixed {
-				if fa == fpnt.ProductId {
-					result = append(result, vulnObj)
+		if c, _ := stringSliceContains(productStatus, "first_fixed"); c {
+			if vulnObj.ProductStatus.FirstFixed != nil {
+				for _, fa := range *vulnObj.ProductStatus.FirstFixed {
+					if fa == fpnt.ProductId {
+						result = append(result, vulnObj)
+					}
 				}
 			}
 		}
 		// fixed
-		if vulnObj.ProductStatus.Fixed != nil {
-			for _, fa := range *vulnObj.ProductStatus.Fixed {
-				if fa == fpnt.ProductId {
-					result = append(result, vulnObj)
+		if c, _ := stringSliceContains(productStatus, "fixed"); c {
+			if vulnObj.ProductStatus.Fixed != nil {
+				for _, fa := range *vulnObj.ProductStatus.Fixed {
+					if fa == fpnt.ProductId {
+						result = append(result, vulnObj)
+					}
 				}
 			}
 		}
 		// known_affected
-		if vulnObj.ProductStatus.KnownAffected != nil {
-			for _, fa := range *vulnObj.ProductStatus.KnownAffected {
-				if fa == fpnt.ProductId {
-					result = append(result, vulnObj)
+		if c, _ := stringSliceContains(productStatus, "known_affected"); c {
+			if vulnObj.ProductStatus.KnownAffected != nil {
+				for _, fa := range *vulnObj.ProductStatus.KnownAffected {
+					if fa == fpnt.ProductId {
+						result = append(result, vulnObj)
+					}
 				}
 			}
 		}
 		// known_not_affected
-		if vulnObj.ProductStatus.KnownNotAffected != nil {
-			for _, fa := range *vulnObj.ProductStatus.KnownNotAffected {
-				if fa == fpnt.ProductId {
-					result = append(result, vulnObj)
+		if c, _ := stringSliceContains(productStatus, "known_not_affected"); c {
+			if vulnObj.ProductStatus.KnownNotAffected != nil {
+				for _, fa := range *vulnObj.ProductStatus.KnownNotAffected {
+					if fa == fpnt.ProductId {
+						result = append(result, vulnObj)
+					}
 				}
 			}
 		}
 		// last_affected
-		if vulnObj.ProductStatus.LastAffected != nil {
-			for _, fa := range *vulnObj.ProductStatus.LastAffected {
-				if fa == fpnt.ProductId {
-					result = append(result, vulnObj)
+		if c, _ := stringSliceContains(productStatus, "last_affected"); c {
+			if vulnObj.ProductStatus.LastAffected != nil {
+				for _, fa := range *vulnObj.ProductStatus.LastAffected {
+					if fa == fpnt.ProductId {
+						result = append(result, vulnObj)
+					}
 				}
 			}
 		}
 		// recommended
-		if vulnObj.ProductStatus.Recommended != nil {
-			for _, fa := range *vulnObj.ProductStatus.Recommended {
-				if fa == fpnt.ProductId {
-					result = append(result, vulnObj)
+		if c, _ := stringSliceContains(productStatus, "recommended"); c {
+			if vulnObj.ProductStatus.Recommended != nil {
+				for _, fa := range *vulnObj.ProductStatus.Recommended {
+					if fa == fpnt.ProductId {
+						result = append(result, vulnObj)
+					}
 				}
 			}
 		}
 		// under_investigation
-		if vulnObj.ProductStatus.UnderInvestigation != nil {
-			for _, fa := range *vulnObj.ProductStatus.UnderInvestigation {
-				if fa == fpnt.ProductId {
-					result = append(result, vulnObj)
+		if c, _ := stringSliceContains(productStatus, "under_investigation"); c {
+			if vulnObj.ProductStatus.UnderInvestigation != nil {
+				for _, fa := range *vulnObj.ProductStatus.UnderInvestigation {
+					if fa == fpnt.ProductId {
+						result = append(result, vulnObj)
+					}
 				}
 			}
 		}
@@ -290,7 +323,62 @@ func findVulnObjectsWithProduct(doc *csaf.CsafJson, fpnt csaf.FullProductNameT) 
 // anyIdentificationHelperMatches tries to compare two Device instances
 // on every property
 func anyIdentificationHelperMatches(refDevice, toMatchDevice Device) bool {
-	return true
+	if (refDevice.Cpe != nil && toMatchDevice.Cpe != nil) && (*refDevice.Cpe == *toMatchDevice.Cpe) {
+		// TODO use a better approach to compare CPE
+		return true
+	}
+	if refDevice.Hashes != nil && toMatchDevice.Hashes != nil {
+		// I found no way to make this comparison easier
+		// as it is nested relatively deep
+		for _, rHashes := range refDevice.Hashes {
+			for _, tHashes := range toMatchDevice.Hashes {
+				for _, rHashesHash := range rHashes.FileHashes {
+					for _, tHashesHash := range tHashes.FileHashes {
+						if rHashes.Filename == tHashes.Filename && rHashesHash.Algorithm == tHashesHash.Algorithm && rHashesHash.Value == tHashesHash.Value {
+							return true
+						}
+					}
+				}
+			}
+		}
+		return false
+	}
+	if (refDevice.ModelNumbers != nil && toMatchDevice.ModelNumbers != nil) && anyMatches(refDevice.ModelNumbers, toMatchDevice.ModelNumbers) {
+		return true
+	}
+	if (refDevice.Purl != nil && toMatchDevice.Purl != nil) && *refDevice.Purl == *toMatchDevice.Purl {
+		return true
+	}
+	if (refDevice.SbomUrls != nil && toMatchDevice.SbomUrls != nil) && anyMatches(refDevice.SbomUrls, toMatchDevice.SbomUrls) {
+		return true
+	}
+	if (refDevice.SerialNumbers != nil && toMatchDevice.SerialNumbers != nil) && anyMatches(refDevice.SerialNumbers, toMatchDevice.SerialNumbers) {
+		return true
+	}
+	if (refDevice.Skus != nil && toMatchDevice.Skus != nil) && anyMatches(refDevice.Skus, toMatchDevice.Skus) {
+		return true
+	}
+	return false
+}
+
+func stringSliceContains(target []string, search string) (bool, int) {
+	for i, t := range target {
+		if t == search {
+			return true, i
+		}
+	}
+	return false, -1
+}
+
+func anyMatches(s1, s2 []string) bool {
+	for _, c1 := range s1 {
+		for _, c2 := range s2 {
+			if c1 == c2 {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func reportError(w *http.ResponseWriter, statusCode int, errcode, errmsg string) {
