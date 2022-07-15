@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/csaf-poc/csaf_distribution/csaf"
 )
@@ -37,6 +38,10 @@ func GetDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
 
 	query := r.URL.Query()
 	productStatusParam := query.Get("product_status")
+	cvssv3Param := query.Get("cvssv3")
+	cvssv3ParamSplit := strings.Split(cvssv3Param, ",")
+	cvssv2Param := query.Get("cvssv2")
+	cvssv2ParamSplit := strings.Split(cvssv2Param, ",")
 
 	localCollection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
 		products := findAllProductObjects(doc)
@@ -61,13 +66,13 @@ func GetDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			// implements product_status
+			// implements product_status filter
 			var vulnObjects []csaf.CsafJsonVulnerabilitiesElem
 			if productStatusParam == "" {
-				// not set
+				// product_status not set
 				vulnObjects = findVulnObjectsWithProduct(doc, product)
 			} else {
-				// set
+				// product_status set
 				vulnObjects = findVulnObjectsWithProduct(doc, product, productStatusParam)
 			}
 
@@ -80,8 +85,63 @@ func GetDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
 
 			keysToRemove := make([]int, 0)
 			for key, vulnObj := range vulnObjectsMap {
-				// TODO implement filter params
-				fmt.Println(key, vulnObj)
+				vulnObjectMatches := true
+				// Must default true! Otherwise, when no filter parameters
+				// are set, the document will not be included, although the
+				// device was matched.
+
+				// check for cvss scores if filter parameter is set
+				if cvssv3Param != "" || cvssv2Param != "" {
+					// at least one of the params was set
+
+					vulnObjectMatches = false
+					// this only will be true if any css score matches
+
+					if vulnObj.Scores == nil || len(vulnObj.Scores) == 0 {
+						vulnObjectMatches = true
+						// justification: see section 3.2.3 of bachelors thesis
+						continue
+					}
+					anyMatch := false
+					for _, score := range vulnObj.Scores {
+						if cvssv3Param != "" {
+							str := fmt.Sprintf("%f", *score.CvssV3.BaseScore)
+							match, err := matchCVSSScore(str, cvssv3ParamSplit...)
+							if err != nil {
+								// on error, stop and report
+								return false, err
+							}
+							if match {
+								// cvssv3 matched
+								anyMatch = true
+								break
+							}
+						}
+						if cvssv2Param != "" {
+							str := fmt.Sprintf("%f", *score.CvssV2.BaseScore)
+							match, err := matchCVSSScore(str, cvssv2ParamSplit...)
+							if err != nil {
+								// on error, stop and report
+								return false, err
+							}
+							if match {
+								// cvssv2 matched
+								anyMatch = true
+								break
+							}
+						}
+					}
+					if anyMatch {
+						vulnObjectMatches = true
+					}
+				}
+
+				// TODO remediation categories
+
+				if !vulnObjectMatches {
+					keysToRemove = append(keysToRemove, key)
+				}
+				// END
 			}
 
 			// delete the keys

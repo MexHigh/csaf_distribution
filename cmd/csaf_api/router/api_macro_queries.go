@@ -59,7 +59,7 @@ func GetByCVE(w http.ResponseWriter, r *http.Request) {
 				// cve matched
 				if cvssv3Param != "" || cvssv2Param != "" {
 					// any of the params was set
-					if len(vuln.Scores) == 0 {
+					if vuln.Scores == nil || len(vuln.Scores) == 0 {
 						// scores property does not exist, checking not possible
 						// do not add the document
 						return false, nil
