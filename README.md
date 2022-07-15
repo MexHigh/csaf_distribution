@@ -18,6 +18,9 @@ is an implementation of the role CSAF Aggregator.
 ## [csaf_checker](docs/csaf_checker.md)
 is a tool for testing a CSAF Trusted Provider according to [Section 7 of the CSAF standard](https://docs.oasis-open.org/csaf/csaf/v2.0/csaf-v2.0.html#7-distributing-csaf-documents).
 
+## [csaf_api](docs/csaf_api.md)
+is the API which can be used in conjunction with the `csaf_provider` and `csaf_aggregator`.
+
 ## Setup
 Note that the server side is only tested
 and the binaries available for GNU/Linux-Systems, e.g. Ubuntu LTS.
