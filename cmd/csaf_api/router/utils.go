@@ -13,6 +13,10 @@ import (
 	"github.com/csaf-poc/csaf_distribution/csaf"
 )
 
+// structToJSONInterface converts a filled struct back to it's
+// byte representation and then unmarshals it back to the
+// interface{} type. This is useful when some kind of interface{}
+// evaluation of a struct is required by a dependency or other function.
 func structToJSONInterface(s interface{}) (interface{}, error) {
 	data, err := json.Marshal(s)
 	if err != nil {
@@ -26,6 +30,10 @@ func structToJSONInterface(s interface{}) (interface{}, error) {
 	return dataIf, nil
 }
 
+// isJSONType returns whether v is of JSON type t. It uses the reflect
+// package to determine the Go-type of v and maps it to the types used
+// for unmarshalling JSON into a Go-struct. This way, the original JSON
+// type can be detected.
 func isJSONType(v interface{}, t string) bool {
 	if v == nil {
 		return false
@@ -69,13 +77,19 @@ func getContextVars(r *http.Request) []csaf.TLPLabel {
 }
 
 // getWithParameters reads the "?with_*" parameters and returns
-// wheather they are set.
+// whether they are set.
 func getWithParameters(r *http.Request) (withHashes, withSignature bool) {
 	query := r.URL.Query()
 	// no need to check values, as the parameters are expected to be bool
 	return query.Has("with_hashes"), query.Has("with_signature")
 }
 
+// addTLPFilter adds a TLP filter to a CSAFDocumentCollection without executing
+// it directly. Call CSAFDocumentCollection.StartFiltering() to execute all
+// filters.
+//
+// The filter matches all documents with the TLP-Labels specified in tlpPerms.
+// If len(tlpPerms) == 0, all document will be filtered out!
 func addTLPFilter(collection *csaf.CSAFDocumentCollection, tlpPerms []csaf.TLPLabel) {
 	collection.AddFilterFunc(func(doc *csaf.CsafJson) (bool, error) {
 		allowed := false
@@ -120,37 +134,6 @@ func matchCVSSScore(score string, expressions ...string) (bool, error) {
 		}
 	}
 	return allMatched, nil
-}
-
-// matchByMatchingParameter matches two strings depending on the method set in "?matching=".
-// If it is not set or empty, exact matching is performed.
-//
-// Possible values are "exact", "regex", "begins-with", "ends-with" and "contains".
-// If other values are set, an error is returned.
-//
-// Deprecated: use matchByMatching instead
-func matchByMatchingParameter(searchString, toMatchString string, r *http.Request) (bool, error) {
-	query := r.URL.Query()
-	matching := query.Get("matching")
-	if matching == "" {
-		// if not set, matching is exact
-		return searchString == toMatchString, nil
-	}
-
-	switch matching {
-	case "exact":
-		return searchString == toMatchString, nil
-	case "regex":
-		return regexp.MatchString(toMatchString, searchString)
-	case "begins-with":
-		return strings.HasPrefix(searchString, toMatchString), nil
-	case "ends-with":
-		return strings.HasSuffix(searchString, toMatchString), nil
-	case "contains":
-		return strings.Contains(searchString, toMatchString), nil
-	default:
-		return false, fmt.Errorf("matching parameter value %s is unknown", matching)
-	}
 }
 
 // matchByMatching works exactly like matchByMatchingParameter, but instead of
@@ -322,7 +305,7 @@ func findVulnObjectsWithProduct(doc *csaf.CsafJson, fpnt csaf.FullProductNameT, 
 
 // anyIdentificationHelperMatches tries to compare two Device instances
 // on every property
-func anyIdentificationHelperMatches(refDevice, toMatchDevice Device) bool {
+func anyIdentificationHelperMatches(refDevice, toMatchDevice device) bool {
 	if (refDevice.Cpe != nil && toMatchDevice.Cpe != nil) && (*refDevice.Cpe == *toMatchDevice.Cpe) {
 		// TODO use a better approach to compare CPE
 		return true
@@ -385,6 +368,10 @@ func atLeastOneRemediationExists(vulnObj *csaf.CsafJsonVulnerabilitiesElem, cate
 	return false
 }
 
+// stringSliceContains checks whether a string (search) is
+// contained within a string slice (target). The index, where
+// the searched string was found is also returned as a second
+// return value.
 func stringSliceContains(target []string, search string) (bool, int) {
 	for i, t := range target {
 		if t == search {
@@ -394,6 +381,10 @@ func stringSliceContains(target []string, search string) (bool, int) {
 	return false, -1
 }
 
+// anyMatches checks, if two string slices contain
+// at least one common value. The index of these values
+// is irrelevant, meaning that s1[10] can also match
+// s2[45].
 func anyMatches(s1, s2 []string) bool {
 	for _, c1 := range s1 {
 		for _, c2 := range s2 {
@@ -403,56 +394,4 @@ func anyMatches(s1, s2 []string) bool {
 		}
 	}
 	return false
-}
-
-func reportError(w *http.ResponseWriter, statusCode int, errcode, errmsg string) {
-	obj := GenericResponse{
-		Error: &ModelError{
-			Errcode: errcode,
-			Errmsg:  errmsg,
-		},
-	}
-
-	v, err := json.Marshal(obj)
-	if err != nil {
-		panic(err)
-	}
-
-	(*w).Header().Set("Content-Type", "application/json; charset=UTF-8")
-	(*w).WriteHeader(statusCode)
-	(*w).Write(v)
-}
-
-func reportSuccess(w *http.ResponseWriter, documents []csaf.CSAFDocumentWrapper, withHash, withSignature bool) {
-	obj := CSAFDocumentResponse{
-		GenericResponse: GenericResponse{
-			Error: nil,
-		},
-		DocumentsFound: len(documents),
-		Documents:      make([]CSAFDocumentResponseDocuments, 0),
-	}
-
-	for _, doc := range documents {
-		tDoc := doc // needed to prevent race conditions !!! (sometimes, documents are added twice)
-		toAdd := CSAFDocumentResponseDocuments{
-			Content: tDoc.Document,
-		}
-		if withHash {
-			toAdd.Hashes = tDoc.Hashes
-		}
-		if withSignature {
-			toAdd.Signature = tDoc.Signature
-		}
-		obj.Documents = append(obj.Documents, toAdd)
-	}
-
-	v, err := json.Marshal(obj)
-	if err != nil {
-		reportError(w, 500, "SERVER_ERROR", err.Error())
-		return
-	}
-
-	(*w).Header().Set("Content-Type", "application/json; charset=UTF-8")
-	(*w).WriteHeader(http.StatusOK)
-	(*w).Write(v)
 }

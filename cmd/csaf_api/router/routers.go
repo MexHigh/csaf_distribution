@@ -55,32 +55,32 @@ func NewAPI(role string, auth []config.AuthData, docs *csaf.CSAFDocumentCollecti
 	v1Router.Use(loggingMiddleware)
 
 	// Meta routes
-	v1Router.Methods("GET").Path("/").HandlerFunc(Index).Name("Index")
-	v1Router.Methods("GET").Path("/metadata").HandlerFunc(GetMetadata).Name("GetMetadata")
-	v1Router.Methods("GET").Path("/role").HandlerFunc(GetRole).Name("GetRole")
+	v1Router.Methods("GET").Path("/").HandlerFunc(index).Name("Index")
+	v1Router.Methods("GET").Path("/metadata").HandlerFunc(getMetadata).Name("GetMetadata")
+	v1Router.Methods("GET").Path("/role").HandlerFunc(getRole).Name("GetRole")
 
 	// CSAF routes
 	csafV1Router := v1Router.PathPrefix("/csaf-documents").Subrouter()
 	csafV1Router.Use(filterResetMiddleware)
 	csafV1Router.Use(authMiddleware)
 	// macro queries
-	csafV1Router.Methods("GET").Path("/by-id/{publisher_namespace}/{tracking_id}").HandlerFunc(GetByID).Name("GetByID")
-	csafV1Router.Methods("GET").Path("/by-title/{title}").HandlerFunc(GetByTitle).Name("GetByTitle")
-	csafV1Router.Methods("GET").Path("/by-publisher/{publisher_name}").HandlerFunc(GetByPublisher).Name("GetByPublisher")
-	csafV1Router.Methods("GET").Path("/by-cve/{cve}").HandlerFunc(GetByCVE).Name("GetByCVE")
+	csafV1Router.Methods("GET").Path("/by-id/{publisher_namespace}/{tracking_id}").HandlerFunc(getByID).Name("GetByID")
+	csafV1Router.Methods("GET").Path("/by-title/{title}").HandlerFunc(getByTitle).Name("GetByTitle")
+	csafV1Router.Methods("GET").Path("/by-publisher/{publisher_name}").HandlerFunc(getByPublisher).Name("GetByPublisher")
+	csafV1Router.Methods("GET").Path("/by-cve/{cve}").HandlerFunc(getByCVE).Name("GetByCVE")
 	// arbitrary queries
-	csafV1Router.Methods("GET").Path("/match-property").HandlerFunc(GetDocumentByJSONMatch).Name("GetDocumentByJSONMatch")
-	csafV1Router.Methods("POST").Path("/match-properties").HandlerFunc(GetDocumentByJSONMatches).Name("GetDocumentByJSONMatches")
+	csafV1Router.Methods("GET").Path("/match-property").HandlerFunc(getDocumentByJSONMatch).Name("GetDocumentByJSONMatch")
+	csafV1Router.Methods("POST").Path("/match-properties").HandlerFunc(getDocumentByJSONMatches).Name("GetDocumentByJSONMatches")
 	// special queries
-	csafV1Router.Methods("POST").Path("/from-device-list").HandlerFunc(GetDocumentsByDeviceList).Name("GetDocumentsByDeviceList")
-	csafV1Router.Methods("POST").Path("/from-sbom-url").HandlerFunc(GetDocumentsBySBOMUrl).Name("GetDocumentsBySBOMUrl")
-	csafV1Router.Methods("POST").Path("/from-sbom-document").HandlerFunc(GetDocumentsBySBOMDocument).Name("GetDocumentsBySBOMDocument")
-	csafV1Router.Methods("POST").Path("/from-mud-url").HandlerFunc(GetDocumentsByMUDUrl).Name("GetDocumentsByMUDUrl")
-	csafV1Router.Methods("POST").Path("/from-mud-document").HandlerFunc(GetDocumentsByMUDDocument).Name("GetDocumentsByMUDDocument")
+	csafV1Router.Methods("POST").Path("/from-device-list").HandlerFunc(getDocumentsByDeviceList).Name("GetDocumentsByDeviceList")
+	csafV1Router.Methods("POST").Path("/from-sbom-url").HandlerFunc(getDocumentsBySBOMUrl).Name("GetDocumentsBySBOMUrl")
+	csafV1Router.Methods("POST").Path("/from-sbom-document").HandlerFunc(getDocumentsBySBOMDocument).Name("GetDocumentsBySBOMDocument")
+	csafV1Router.Methods("POST").Path("/from-mud-url").HandlerFunc(getDocumentsByMUDUrl).Name("GetDocumentsByMUDUrl")
+	csafV1Router.Methods("POST").Path("/from-mud-document").HandlerFunc(getDocumentsByMUDDocument).Name("GetDocumentsByMUDDocument")
 
 	return router
 }
 
-func Index(w http.ResponseWriter, r *http.Request) {
+func index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello World!")
 }

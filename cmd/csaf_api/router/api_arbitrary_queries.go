@@ -18,7 +18,7 @@ import (
 	"github.com/csaf-poc/csaf_distribution/util"
 )
 
-func GetDocumentByJSONMatch(w http.ResponseWriter, r *http.Request) {
+func getDocumentByJSONMatch(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	pathParam := query.Get("path")
 	if pathParam == "" {
@@ -122,9 +122,9 @@ func GetDocumentByJSONMatch(w http.ResponseWriter, r *http.Request) {
 	reportSuccess(&w, filtered, withHashes, withSignatures)
 }
 
-func GetDocumentByJSONMatches(w http.ResponseWriter, r *http.Request) {
+func getDocumentByJSONMatches(w http.ResponseWriter, r *http.Request) {
 	// read request body
-	var matchingRequestBody AdvancedMatching
+	var matchingRequestBody advancedMatching
 	if err := json.NewDecoder(r.Body).Decode(&matchingRequestBody); err != nil {
 		reportError(&w, 400, "BAD_REQUEST", err.Error())
 		return

@@ -19,7 +19,7 @@ import (
 	"github.com/csaf-poc/csaf_distribution/csaf"
 )
 
-func GetByCVE(w http.ResponseWriter, r *http.Request) {
+func getByCVE(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	cveEncoded, ok := vars["cve"]
 	if !ok {
@@ -120,7 +120,7 @@ func GetByCVE(w http.ResponseWriter, r *http.Request) {
 	reportSuccess(&w, filtered, withHashes, withSignatures)
 }
 
-func GetByID(w http.ResponseWriter, r *http.Request) {
+func getByID(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	namespaceEncoded, ok := vars["publisher_namespace"]
 	if !ok {
@@ -157,7 +157,7 @@ func GetByID(w http.ResponseWriter, r *http.Request) {
 	reportSuccess(&w, filtered, withHashes, withSignatures)
 }
 
-func GetByPublisher(w http.ResponseWriter, r *http.Request) {
+func getByPublisher(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	publisherNameEncoded, ok := vars["publisher_name"]
 	if !ok {
@@ -211,7 +211,7 @@ func GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	reportSuccess(&w, filtered, withHashes, withSignatures)
 }
 
-func GetByTitle(w http.ResponseWriter, r *http.Request) {
+func getByTitle(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	titleEncoded, ok := vars["title"]
 	if !ok {

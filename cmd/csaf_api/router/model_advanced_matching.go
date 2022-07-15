@@ -12,7 +12,7 @@ import (
 	"fmt"
 )
 
-type Match struct {
+type match struct {
 	Path           string       `json:"path"`
 	Type           string       `json:"type,omitempty"` // default: irrelevant
 	Value          *interface{} `json:"value"`
@@ -20,14 +20,14 @@ type Match struct {
 	IncludeMissing bool         `json:"include_missing,omitempty"` // default: false (implicit)
 }
 
-type AdvancedMatching struct {
+type advancedMatching struct {
 	MatchingDefault string   `json:"matching_default,omitempty"` // default: exact
 	Operator        string   `json:"operator,omitempty"`         // (and|or) default: and
-	Matches         []*Match `json:"matches"`
+	Matches         []*match `json:"matches"`
 }
 
 // Provision sets the default values, if not set
-func (am *AdvancedMatching) Provision() {
+func (am *advancedMatching) Provision() {
 	if am.Operator == "" {
 		am.Operator = "and"
 	}
@@ -45,7 +45,7 @@ func (am *AdvancedMatching) Provision() {
 // Check checks if all values are set correctly
 // after provision (e.g. if operator is either
 // "and" or "or")
-func (am *AdvancedMatching) Check() error {
+func (am *advancedMatching) Check() error {
 	// check matching_default
 	switch am.MatchingDefault {
 	case "exact", "regex", "begins-with", "ends-with", "contains":

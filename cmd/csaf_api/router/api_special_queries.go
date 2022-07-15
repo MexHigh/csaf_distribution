@@ -17,11 +17,11 @@ import (
 	"github.com/csaf-poc/csaf_distribution/csaf"
 )
 
-type Device csaf.FullProductNameTProductIdentificationHelper
+type device csaf.FullProductNameTProductIdentificationHelper
 
-func GetDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
+func getDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
 	// read request body
-	var deviceListRequestBody []Device
+	var deviceListRequestBody []device
 	if err := json.NewDecoder(r.Body).Decode(&deviceListRequestBody); err != nil {
 		reportError(&w, 400, "BAD_REQUEST", err.Error())
 		return
@@ -56,7 +56,7 @@ func GetDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
 			matched := false
 			for _, searchedProduct := range deviceListRequestBody {
 				if anyIdentificationHelperMatches(
-					Device(*product.ProductIdentificationHelper),
+					device(*product.ProductIdentificationHelper),
 					searchedProduct,
 				) {
 					matched = true
@@ -176,22 +176,22 @@ func GetDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
 	reportSuccess(&w, filtered, withHashes, withSignatures)
 }
 
-func GetDocumentsByMUDDocument(w http.ResponseWriter, r *http.Request) {
+func getDocumentsByMUDDocument(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
-func GetDocumentsByMUDUrl(w http.ResponseWriter, r *http.Request) {
+func getDocumentsByMUDUrl(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
-func GetDocumentsBySBOMDocument(w http.ResponseWriter, r *http.Request) {
+func getDocumentsBySBOMDocument(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }
 
-func GetDocumentsBySBOMUrl(w http.ResponseWriter, r *http.Request) {
+func getDocumentsBySBOMUrl(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 }

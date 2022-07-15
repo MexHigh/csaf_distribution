@@ -52,7 +52,7 @@ func main() {
 	}*/
 
 	log.Println("Loading API server routes")
-	router := router.NewAPI(
+	r := router.NewAPI(
 		string(c.UsedIn),
 		c.Auth,
 		collection,
@@ -60,5 +60,5 @@ func main() {
 	)
 
 	log.Println("Starting API server")
-	log.Fatal(http.ListenAndServe(c.BindAddress, router))
+	log.Fatal(http.ListenAndServe(c.BindAddress, r))
 }
