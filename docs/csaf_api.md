@@ -38,9 +38,9 @@ Please read [provider-setup.md](provider-setup.md) first to setup nginx. Then ad
 ```
 server {
     ...
-    location /.well-known/csaf/api {
+    location /.well-known/csaf/api/ {
         add_header Access-Control-Allow-Origin "*";
-        proxy_pass http://localhost:8081;
+        proxy_pass http://localhost:8081/;
     }
     ...
 }

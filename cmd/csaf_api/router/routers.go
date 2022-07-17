@@ -44,7 +44,7 @@ func NewAPI(role string, auth []config.AuthData, docs *csaf.CSAFDocumentCollecti
 	// This requires manual url-unescaping of path
 	// parameters in the routes!
 
-	v1Router := router.PathPrefix("/.well-known/csaf/api/v1/").Subrouter()
+	v1Router := router.PathPrefix("/v1").Subrouter()
 	// overwrite default handlers to respond with JSON
 	v1Router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reportError(&w, 404, "NOT_FOUND", "route not found")
