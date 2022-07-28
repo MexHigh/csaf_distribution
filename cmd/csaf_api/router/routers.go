@@ -46,10 +46,10 @@ func NewAPI(role string, auth []config.AuthData, docs *csaf.CSAFDocumentCollecti
 
 	v1Router := router.PathPrefix("/v1").Subrouter()
 	// overwrite default handlers to respond with JSON
-	v1Router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	v1Router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		reportError(&w, 404, "NOT_FOUND", "route not found")
 	})
-	v1Router.MethodNotAllowedHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	v1Router.MethodNotAllowedHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		reportError(&w, 405, "METHOD_NOT_ALLOWED", "method not allowed")
 	})
 	v1Router.Use(loggingMiddleware)
@@ -73,14 +73,10 @@ func NewAPI(role string, auth []config.AuthData, docs *csaf.CSAFDocumentCollecti
 	csafV1Router.Methods("POST").Path("/match-properties").HandlerFunc(getDocumentByJSONMatches).Name("GetDocumentByJSONMatches")
 	// special queries
 	csafV1Router.Methods("POST").Path("/from-device-list").HandlerFunc(getDocumentsByDeviceList).Name("GetDocumentsByDeviceList")
-	csafV1Router.Methods("POST").Path("/from-sbom-url").HandlerFunc(getDocumentsBySBOMUrl).Name("GetDocumentsBySBOMUrl")
-	csafV1Router.Methods("POST").Path("/from-sbom-document").HandlerFunc(getDocumentsBySBOMDocument).Name("GetDocumentsBySBOMDocument")
-	csafV1Router.Methods("POST").Path("/from-mud-url").HandlerFunc(getDocumentsByMUDUrl).Name("GetDocumentsByMUDUrl")
-	csafV1Router.Methods("POST").Path("/from-mud-document").HandlerFunc(getDocumentsByMUDDocument).Name("GetDocumentsByMUDDocument")
 
 	return router
 }
 
-func index(w http.ResponseWriter, r *http.Request) {
+func index(w http.ResponseWriter, _ *http.Request) {
 	fmt.Fprintf(w, "Hello World!")
 }

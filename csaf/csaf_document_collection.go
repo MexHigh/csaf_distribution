@@ -40,7 +40,8 @@ func (dc *CSAFDocumentCollection) AddFilterFunc(f ...func(doc *CsafJson) (bool, 
 }
 
 // ClearFilterFuncs removes all filter functions. When calling
-// StartFiltering, the filter function get cleared automatically.
+// StartFiltering(), the filter functions get cleared
+// automatically afterwards.
 func (dc *CSAFDocumentCollection) ClearFilterFuncs() {
 	dc.filters = make([]func(doc *CsafJson) (bool, error), 0)
 }

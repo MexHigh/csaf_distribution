@@ -24,7 +24,7 @@ type metadataResponse struct {
 	Aggregator       *interface{} `json:"aggregator,omitempty"`        // See https://docs.oasis-open.org/csaf/csaf/v2.0/aggregator_json_schema.json
 }
 
-func getMetadata(w http.ResponseWriter, r *http.Request) {
+func getMetadata(w http.ResponseWriter, _ *http.Request) {
 	// determine path to the metadata files
 	var (
 		fullPath string
@@ -107,7 +107,7 @@ type roleResponse struct {
 	Role  string      `json:"role,omitempty"`
 }
 
-func getRole(w http.ResponseWriter, r *http.Request) {
+func getRole(w http.ResponseWriter, _ *http.Request) {
 	res := roleResponse{}
 	var status int
 

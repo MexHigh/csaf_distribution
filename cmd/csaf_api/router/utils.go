@@ -347,7 +347,7 @@ func anyIdentificationHelperMatches(refDevice, toMatchDevice device) bool {
 // atLeastOneRemediationExists checks if at least one remediation object exists in a vulnerability
 // object. You can specify remediation categories (see CSAF 2.0 section 3.2.3.12.1) for which to
 // search specifically. If no categories are specified, all remediation categories count.
-func atLeastOneRemediationExists(vulnObj *csaf.CsafJsonVulnerabilitiesElem, categories ...string) bool {
+func atLeastOneRemediationExists(product *csaf.FullProductNameT, vulnObj *csaf.CsafJsonVulnerabilitiesElem, categories ...string) bool {
 	if len(categories) == 0 {
 		categories = []string{
 			"mitigation",
@@ -361,7 +361,17 @@ func atLeastOneRemediationExists(vulnObj *csaf.CsafJsonVulnerabilitiesElem, cate
 		return false
 	}
 	for _, remediation := range vulnObj.Remediations {
-		if c, _ := stringSliceContains(categories, string(remediation.Category)); c {
+		catMatch, _ := stringSliceContains(categories, string(remediation.Category))
+
+		// convert csaf.ProductsT to []string for stringSliceContains function
+		productIDStrings := make([]string, 0)
+		for _, pID := range remediation.ProductIds {
+			productIDStrings = append(productIDStrings, string(pID))
+		}
+		productMatch, _ := stringSliceContains(productIDStrings, string(product.ProductId))
+
+		// check if category matches and product ID is contained
+		if catMatch && productMatch {
 			return true
 		}
 	}

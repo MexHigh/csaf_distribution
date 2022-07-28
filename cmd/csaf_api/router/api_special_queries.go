@@ -139,7 +139,7 @@ func getDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
 
 				// check for remediation_category parameter
 				if remediationCategoryParam != "" {
-					if !atLeastOneRemediationExists(&vulnObj, remediationCategoryParam) {
+					if !atLeastOneRemediationExists(&product, &vulnObj, remediationCategoryParam) {
 						vulnObjectMatches = false
 					}
 				}
@@ -174,24 +174,4 @@ func getDocumentsByDeviceList(w http.ResponseWriter, r *http.Request) {
 
 	withHashes, withSignatures := getWithParameters(r)
 	reportSuccess(&w, filtered, withHashes, withSignatures)
-}
-
-func getDocumentsByMUDDocument(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-}
-
-func getDocumentsByMUDUrl(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-}
-
-func getDocumentsBySBOMDocument(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-}
-
-func getDocumentsBySBOMUrl(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
 }
